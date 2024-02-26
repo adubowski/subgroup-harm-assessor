@@ -403,11 +403,11 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                                 html.Br(),
                                 dbc.Col([
                                     # Add slider for sensitivity of the test
-                                    html.H6("Select sensitivity for the KS test: "),
+                                    html.H6("Select sensitivity for the KS test (Data table rows in bold are significant at the 0.01 level): "),
                                     dcc.Slider(
-                                        1, 7, 1, value=4, id="feat-sensitivity-slider"
+                                        1, 7, 1, value=1, id="feat-sensitivity-slider"
                                     ),
-                                    html.H6("Sensitivity is used for the granularity of the data in the KS test to avoid minor differences between distributions. The larger the subgroup, the smaller should the sensitivity be for the test. Rows in bold are significant at the 0.01 level."),
+                                    html.H6("Sensitivity is the level of granularity (rounding) of the data in the KS test to avoid minor differences between distributions. The larger the subgroup, the smaller should the sensitivity be for the test."),
                                 ]),
                             ]),
                         ],
