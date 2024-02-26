@@ -1,5 +1,7 @@
 import logging
 import time
+
+from sklearn.ensemble import RandomForestClassifier
 import shap
 import pandas as pd
 import numpy as np
@@ -142,7 +144,7 @@ def add_bias(bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgr
     print(f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted: {len(subgroup)}.")
 
 
-def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot_X_test: pd.DataFrame, with_names=True):
+def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot_X_test: pd.DataFrame, with_names=True, model="rf"):
     """Get a decision tree classifier for the given dataset.
 
     Args:
@@ -151,10 +153,11 @@ def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot
         onehot_X_test: one-hot encoded features dataframe used for testing
     """
     # Training the classifier
-    # TODO: Switch to RandomForestClassifier and fix bugs
-    # classifier = RandomForestClassifier(n_estimators=100, max_depth=8, random_state=0)
-
-    classifier = DecisionTreeClassifier(min_samples_leaf=30, max_depth=8)
+    if model == "rf":
+        classifier = RandomForestClassifier(n_estimators=20, max_depth=8, random_state=0)
+    # TODO: Add XGBoost
+    else:
+        classifier = DecisionTreeClassifier(min_samples_leaf=30, max_depth=8)
     if not with_names:
         onehot_X_train = onehot_X_train.values
         onehot_X_test = onehot_X_test.values

@@ -26,7 +26,7 @@ from plot import get_data_distr_charts, get_data_table, get_feat_box, get_feat_s
 from metrics import Y_PRED_METRICS, get_qf_from_str, get_quality_metric_from_str, sort_quality_metrics_df
 
 
-def prepare_app(n_samples=0, dataset="adult", bias=False, train_split=True) \
+def prepare_app(n_samples=0, dataset="adult", bias=False, train_split=True, model="rf") \
     -> Tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray, np.ndarray, pd.Index]:
     """Loads the data and trains the classifier
     
@@ -49,7 +49,7 @@ def prepare_app(n_samples=0, dataset="adult", bias=False, train_split=True) \
     if bias:
         add_bias(bias, X_test, onehot_X_test, random_subgroup)
      
-    classifier, y_pred, y_pred_prob = get_classifier(onehot_X_train, y_true_train, onehot_X_test)
+    classifier, y_pred, y_pred_prob = get_classifier(onehot_X_train, y_true_train, onehot_X_test, model=model)
 
     shap_logloss_df = get_shap_logloss(classifier, onehot_X_test, y_true_test, X_test, cat_features)
     y_df = pd.DataFrame(
@@ -68,12 +68,14 @@ def prepare_app(n_samples=0, dataset="adult", bias=False, train_split=True) \
     return X_test, y_true_test, y_pred, y_pred_prob, shap_logloss_df, y_df, random_subgroup
 
 
-def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random_subgroup=False, train_split=True):
+def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random_subgroup=False, train_split=True, model="rf"):
     """Runs the app with the given qf_metric"""
     use_random_subgroup = random_subgroup or bias # When evaluating bias, we want to evaluate against a random subgroup
     start = time.time()
     X_test, y_true_global_test, y_pred_global, y_pred_prob_global, \
-        shap_logloss_df_global, y_df_global, random_subgroup_global = prepare_app(n_samples=n_samples, dataset=dataset, bias=bias, train_split=train_split)
+        shap_logloss_df_global, y_df_global, random_subgroup_global = prepare_app(
+            n_samples=n_samples, dataset=dataset, bias=bias, train_split=train_split, model=model
+        )
 
     app.layout = html.Div(
         id="app-container",
@@ -783,7 +785,8 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--bias", type=str, default=False, help="Type of bias to add to the dataset")
     parser.add_argument("-r", "--random_subgroup", action="store_true", default=False, help="Flag whether to use a random subgroup for evaluation")
     parser.add_argument("-s", "--train_split", default=True, help="Flag whether to split the number of samples selected into train and test. Only test data is then used for visualizations")
+    parser.add_argument("-m", "--model", type=str, default="rf", help="Model to use for the evaluation. Available options are: 'rf', 'dt', 'xgb'")
     args = parser.parse_args()
     # bias = args.bias if args.bias in ("random", "mean", "swap", "bin", "binning") else False
     train_split = False if args.train_split in ("False", "false", False, "F") else True
-    run_app(args.n_samples, args.dataset, args.bias, args.random_subgroup, train_split)
+    run_app(args.n_samples, args.dataset, args.bias, args.random_subgroup, train_split, args.model)
