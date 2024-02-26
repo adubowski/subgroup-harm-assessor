@@ -171,13 +171,12 @@ def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot
         onehot_X_train = onehot_X_train.values
         onehot_X_test = onehot_X_test.values
     
+    print("Training the classifier...")
     classifier.fit(onehot_X_train, y_true_train)
 
-    # Producing y_pred
-    y_pred = classifier.predict(onehot_X_test)
     y_pred_prob = classifier.predict_proba(onehot_X_test)
 
-    return classifier, y_pred, y_pred_prob[:, 1]
+    return classifier, y_pred_prob[:, 1]
 
 
 def combine_shap_one_hot(shap_values, X_columns, cat_features):

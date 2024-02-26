@@ -49,31 +49,19 @@ def prepare_app(n_samples=0, dataset="adult", bias=False, train_split=True, mode
     if bias:
         add_bias(bias, X_test, onehot_X_test, random_subgroup)
      
-    classifier, y_pred, y_pred_prob = get_classifier(onehot_X_train, y_true_train, onehot_X_test, model=model)
+    classifier, y_pred_prob = get_classifier(onehot_X_train, y_true_train, onehot_X_test, model=model)
 
     shap_logloss_df = get_shap_logloss(classifier, onehot_X_test, y_true_test, X_test, cat_features)
-    y_df = pd.DataFrame(
-        {"y_true": y_true_test, "y_pred": y_pred, "probability": y_pred_prob}
-    )
-    y_df["category"] = y_df.apply(
-        lambda row: "TP"
-        if row["y_true"] == 1 and row["probability"] >= 0.5
-        else "FP"
-        if row["y_true"] == 0 and row["probability"] >= 0.5
-        else "FN"
-        if row["y_true"] == 1 and row["probability"] < 0.5
-        else "TN",
-        axis=1,
-    )
-    return X_test, y_true_test, y_pred, y_pred_prob, shap_logloss_df, y_df, random_subgroup
+
+    return X_test, y_true_test, y_pred_prob, shap_logloss_df, random_subgroup
 
 
 def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random_subgroup=False, train_split=True, model="rf"):
     """Runs the app with the given qf_metric"""
     use_random_subgroup = random_subgroup or bias # When evaluating bias, we want to evaluate against a random subgroup
     start = time.time()
-    X_test, y_true_global_test, y_pred_global, y_pred_prob_global, \
-        shap_logloss_df_global, y_df_global, random_subgroup_global = prepare_app(
+    X_test, y_true_global_test, y_pred_prob_global, \
+        shap_logloss_df_global, random_subgroup_global = prepare_app(
             n_samples=n_samples, dataset=dataset, bias=bias, train_split=train_split, model=model
         )
 
@@ -276,10 +264,14 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                                             html.Br(),
                                             # Add placeholder for graph
                                             dcc.Graph(id="simple-baseline-hist"),
+                                            # Add slider for decision threshold
+                                            html.H6("Select decision threshold for the model:"),
+                                            dcc.Slider(
+                                                0.1, 0.9, 0.1, value=0.5, id="simple-baseline-threshold-slider"
+                                            ),
                                         ],
                                         style={
                                             "textAlign": "center", 
-                                            # "border-right": "3px solid #d3d3d3",
                                             "margin-right": "0.5",
                                         },
                                     ),
@@ -541,52 +533,64 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
         Output("subgroup-dropdown", "options"),
         Output("result-set-dict", "data"),
         Input("fairness-metric-dropdown", "value"),
+        Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_baseline_stats_and_subgroups(value):
-        if not value:
+    def get_baseline_stats_and_subgroups(metric, threshold):
+        if not metric:
             raise PreventUpdate
-        
-        if value in Y_PRED_METRICS:
-            y_pred = y_pred_global.copy()
-        else:
-            y_pred = y_pred_prob_global.copy()
     
         y_true = y_true_global_test.copy()
-        y_pred = y_pred_global.copy()
         y_pred_prob = y_pred_prob_global.copy()
-        y_df = y_df_global.copy()
+        if metric in Y_PRED_METRICS:
+            y_pred = (y_pred_prob >= threshold).astype(int)
+        else:
+            y_pred = y_pred_prob.copy()
+        
+        y_df = pd.DataFrame(
+            {"y_true": y_true, "probability": y_pred_prob}
+        )
+        y_df["category"] = y_df.apply(
+            lambda row: "TP"
+            if row["y_true"] == 1 and row["probability"] >= threshold
+            else "FP"
+            if row["y_true"] == 0 and row["probability"] >= threshold
+            else "FN"
+            if row["y_true"] == 1 and row["probability"] < threshold
+            else "TN",
+            axis=1,
+        )
 
         baseline_descr = "Full dataset baseline"
 
         # baseline_imp_bar = get_shap_barchart(shap_values_df, baseline_sg, "Mean contribution to model loss for the baseline (lower is better, features with non-negative importance are not helping the prediction)")
-        baseline_data_table = get_data_table(baseline_descr, y_true, y_pred, y_pred_prob, qf_metric=value, sg_feature=pd.Series([True]*y_true.shape[0]))
+        baseline_data_table = get_data_table(baseline_descr, y_true, y_pred, y_pred_prob, qf_metric=metric, sg_feature=pd.Series([True]*y_true.shape[0]))
         baseline_conf_mat = CMchart(
-            "Confusion Matrix", y_true, y_pred
+            "Confusion Matrix", y_true, (y_pred_prob >= threshold).astype(int)
         ).fig
         baseline_hist = get_sg_hist(y_df, title="Histogram of prediction probabilities on the full dataset")
 
         if use_random_subgroup:
             sg_feature = random_subgroup_global.copy()
             # Replace the result_set_df with a synthetic random subgroup
-            sg_y_pred = y_pred[sg_feature] if value in Y_PRED_METRICS else y_pred_prob[sg_feature]
+            sg_y_pred = y_pred[sg_feature] if metric in Y_PRED_METRICS else y_pred_prob[sg_feature]
             sg_y_true = y_true[sg_feature]
             result_set_df = pd.DataFrame({
                 'quality': [None],
                 'description': ["Random subgroup"],
                 'size': [sum(sg_feature)],
                 'proportion': [sum(sg_feature)/len(sg_feature)],
-                'metric_score': [get_quality_metric_from_str(value)(sg_y_true, sg_y_pred)],
+                'metric_score': [get_quality_metric_from_str(metric)(sg_y_true, sg_y_pred)],
             })
             result_set_json = {
                 "descriptions": ["Random subgroup"],
                 "sg_features": [sg_feature.to_json()],
-                "metric": value,
+                "metric": metric,
             }
             return (
                 baseline_data_table, 
                 baseline_conf_mat, 
                 baseline_hist, 
-                get_subgroup_dropdown_options(result_set_df, value), 
+                get_subgroup_dropdown_options(result_set_df, metric), 
                 result_set_json
             )
         else:
@@ -594,7 +598,7 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                 X_test,
                 y_true_global_test,
                 y_pred,
-                qf=get_qf_from_str(value),
+                qf=get_qf_from_str(metric),
                 # method="between_groups",
                 method="to_overall",
                 min_support_ratio=0.01,
@@ -604,25 +608,25 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
             )
             result_set_df = result_set.to_dataframe()
             # result_set_df['metric_score'] = 0.0
-            # result_set_df['metric'] = value
+            # result_set_df['metric'] = metric
             metrics = []
             for idx in range(len(result_set_df)):
                 # Add the metric value (e.g. Accuracy for acc_diff)
                 description = result_set.get_description(idx)
                 sg_feature = description.to_boolean_array(X_test)
-                sg_y_pred = y_pred[sg_feature] if value in Y_PRED_METRICS else y_pred_prob[sg_feature]
+                sg_y_pred = y_pred[sg_feature] if metric in Y_PRED_METRICS else y_pred_prob[sg_feature]
                 sg_y_true = y_true[sg_feature]
-                metrics.append(get_quality_metric_from_str(value)(sg_y_true, sg_y_pred))
+                metrics.append(get_quality_metric_from_str(metric)(sg_y_true, sg_y_pred))
 
             result_set_df['metric_score'] = metrics  
-            result_set_df = sort_quality_metrics_df(result_set_df, value)
+            result_set_df = sort_quality_metrics_df(result_set_df, metric)
             # Get the result set json including the ordering from the sort (get the ordering
             return (
                 baseline_data_table, 
                 baseline_conf_mat, 
                 baseline_hist, 
-                get_subgroup_dropdown_options(result_set_df, value), 
-                result_set.to_json(X_test, value, result_set_df), # Store the result set representation in the data store
+                get_subgroup_dropdown_options(result_set_df, metric), 
+                result_set.to_json(X_test, metric, result_set_df), # Store the result set representation in the data store
             )
         
     # Get feature value plot based on subgroup and feature selection
@@ -739,8 +743,9 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
         Output("feat-bar", "figure"),
         Input("result-set-dict", "data"),
         Input("subgroup-dropdown", "value"),
+        Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_subgroup_stats(data, subgroup):
+    def get_subgroup_stats(data, subgroup, threshold):
         """Returns the group description and updates the charts of the selected subgroup"""
         if subgroup is None:
             raise PreventUpdate
@@ -753,10 +758,24 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
         subgroup_description = str(description).replace(" ", "")
         metric = data['metric']
 
-        y_df = y_df_global.copy()
         y_true = y_true_global_test.copy()
-        y_pred = y_pred_global.copy()
+
         y_pred_prob = y_pred_prob_global.copy()
+        y_pred = (y_pred_prob >= threshold).astype(int)
+
+        y_df = pd.DataFrame(
+            {"y_true": y_true, "probability": y_pred_prob}
+        )
+        y_df["category"] = y_df.apply(
+            lambda row: "TP"
+            if row["y_true"] == 1 and row["probability"] >= threshold
+            else "FP"
+            if row["y_true"] == 0 and row["probability"] >= threshold
+            else "FN"
+            if row["y_true"] == 1 and row["probability"] < threshold
+            else "TN",
+            axis=1,
+        )
         shap_values_df = shap_logloss_df_global.copy()
 
         sg_hist = get_sg_hist(y_df[sg_feature])
