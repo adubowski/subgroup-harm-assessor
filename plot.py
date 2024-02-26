@@ -470,7 +470,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4):
     for feature in shap_values_df_mean.index:
         # Run KS test
         _, p_value = ks_2samp(shap_values_df[feature], sg_shap_values_df[feature])
-        shap_values_df_p.loc[feature, "p_value"] = p_value.round(5)
+        shap_values_df_p.loc[feature, "p_value"] = p_value.round(6)
     
     # Merge the dataframes
     df = shap_values_df_mean.merge(shap_values_df_std, left_index=True, right_index=True)

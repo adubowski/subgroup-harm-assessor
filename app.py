@@ -780,10 +780,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--n_samples", type=int, default=0, help="Number of samples to use for the app. Use 0 to load the entire dataset.")
     parser.add_argument("-d", "--dataset", type=str, default="adult", help="Dataset to be used in the evaluation. Available options are: 'adult', 'credit_g', 'heloc'")
-    parser.add_argument("-b", "--bias", type=str, default="False", help="Type of bias to add to the dataset")
+    parser.add_argument("-b", "--bias", type=str, default=False, help="Type of bias to add to the dataset")
     parser.add_argument("-r", "--random_subgroup", action="store_true", default=False, help="Flag whether to use a random subgroup for evaluation")
     parser.add_argument("-s", "--train_split", default=True, help="Flag whether to split the number of samples selected into train and test. Only test data is then used for visualizations")
     args = parser.parse_args()
-    bias = args.bias if args.bias in ("random", "mean", "swap") else False
+    # bias = args.bias if args.bias in ("random", "mean", "swap", "bin", "binning") else False
     train_split = False if args.train_split in ("False", "false", False, "F") else True
-    run_app(args.n_samples, args.dataset, bias, args.random_subgroup, train_split)
+    run_app(args.n_samples, args.dataset, args.bias, args.random_subgroup, train_split)

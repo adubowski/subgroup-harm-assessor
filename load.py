@@ -92,21 +92,42 @@ def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-n
 
 
 def add_bias(bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgroup: pd.Series) -> pd.Series:
+    """Add bias to the dataset."""
 
     if bias == "random":
-        # Currently we only do the eval on capital-gain
-        feature = 'capital-gain'
-        
+        # Currently we only do the eval on a selected feature
+        feature = 'age'
         std_val = X_test[feature].std()
         mean_val = X_test[feature].mean()
-
-        X_test.loc[subgroup, feature] += np.random.normal(mean_val, std_val, len(subgroup))
+        X_test.loc[subgroup, feature] = np.random.normal(mean_val, std_val, sum(subgroup))
+        onehot_X_test.loc[subgroup, feature] = np.random.normal(mean_val, std_val, sum(subgroup))
     elif bias == "mean":
-        feature = 'capital-gain'
+        feature = 'age'
         # Select a random subset of the data
         # Add the mean of the feature to the subset
-        X_test.loc[subgroup, feature] = X_test[feature].mean()
+        X_test.loc[subgroup, feature] = mean_val
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].mean()
+    elif bias == "median":
+        feature = 'age'
+        # Select a random subset of the data
+        # Add the median of the feature to the subset
+        X_test.loc[subgroup, feature] = X_test[feature].median()
+        onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].median()
+    elif bias in ("bin", "binning"):
+        feature = 'age'
+        # Select a random subset of the data
+        # Add the binning of the feature to the subset
+        X_test.loc[subgroup, feature] = X_test[subgroup].apply(lambda x: x[feature] // 10 * 10, axis=1)
+        onehot_X_test.loc[subgroup, feature] = onehot_X_test[subgroup].apply(lambda x: x // 10 * 10, axis=1)
+
+    elif bias == "sum":
+        feature = 'age'
+        std_val = X_test[feature].std()
+        # Select a random subset of the data
+        # Add the standard deviation of the feature to the subset
+        X_test.loc[subgroup, feature] = X_test[subgroup].apply(lambda x: x[feature] + std_val, axis=1)
+        onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].sum()
+    
     elif bias == "swap":
         feature = 'marital-status'
         # Swap the values of the feature to another value in the same column, onehot_X_test is one hot encoded so we need to swap the entire column for the feature
@@ -114,14 +135,11 @@ def add_bias(bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgr
         value_selected = "Divorced"
         X_test.loc[subgroup, feature] = value_selected
         # Set all columns to 0
-        print("Adding bias to onehot_X_test")
-        print(onehot_X_test.columns.str.startswith(feature))
-        onehot_X_test.loc[subgroup, onehot_X_test.columns.str.startswith(feature)] = 0 # FIXME: IF this resets the column - how are we left with so many counts of the feature value?
+        onehot_X_test.loc[subgroup, onehot_X_test.columns.str.startswith(feature)] = 0
         onehot_X_test.loc[subgroup, [feature + "_" + value_selected]] = 1
-        print("Bias added to onehot_X_test")
     else:
-        raise ValueError(f"bias should be either False, 'random', or 'swap', not {bias}")
-    print(f"Added bias to the dataset by {bias} method. Feature {feature} was affected. Subset impacted: {len(subgroup)}.")
+        raise ValueError(f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum, swap.")
+    print(f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted: {len(subgroup)}.")
 
 
 def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot_X_test: pd.DataFrame, with_names=True):
@@ -129,8 +147,8 @@ def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot
 
     Args:
         onehot_X_train: one-hot encoded features dataframe used for training
-        y_true_train: 
-        onehot_X_test: 
+        y_true_train: true labels for training
+        onehot_X_test: one-hot encoded features dataframe used for testing
     """
     # Training the classifier
     # TODO: Switch to RandomForestClassifier and fix bugs
