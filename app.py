@@ -402,12 +402,12 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                                 ]), 
                                 html.Br(),
                                 dbc.Col([
-                                    # Add slide for sensitivity of the test
+                                    # Add slider for sensitivity of the test
                                     html.H6("Select sensitivity for the KS test: "),
                                     dcc.Slider(
                                         1, 7, 1, value=4, id="feat-sensitivity-slider"
                                     ),
-                                    html.H6("Sensitivity is used for the granularity of the data in the KS test to avoid minor differences between distributions. The larger the subgroup, the smaller should the sensitivity be for the test. Rows in bold are significant at the 0.05 level."),
+                                    html.H6("Sensitivity is used for the granularity of the data in the KS test to avoid minor differences between distributions. The larger the subgroup, the smaller should the sensitivity be for the test. Rows in bold are significant at the 0.01 level."),
                                 ]),
                             ]),
                         ],
@@ -465,7 +465,7 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                                 children=[
                                     dbc.Row([
                                         dbc.Col([
-                                            html.H6("Select feature for distribution plot:"),
+                                            html.H6("Select feature for distribution plots:"),
                                             # Add dropdown for feature selection
                                             dcc.Dropdown(
                                                 id="data-feature-dropdown",
@@ -481,7 +481,23 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                                                 },
                                             ),
                                         ]),
-                                        dbc.Col([]),
+                                        dbc.Col([
+                                            # Add dropdown for percentage/absolute values
+                                            html.H6("Select aggregation method for distribution plots:"),
+                                            dcc.Dropdown(
+                                                id="data-agg-dropdown",
+                                                options=[
+                                                    {"label": "Percentage", "value": "percentage"},
+                                                    {"label": "Count", "value": "count"},
+                                                ],
+                                                value="percentage",
+                                                style={
+                                                    "align-items": "center",
+                                                    "width": "50%",
+                                                    "text-align": "center",
+                                                },
+                                            ),
+                                        ]),
                                     ]),
                                     html.Br(),
                                     # dbc.Row([
@@ -658,13 +674,16 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
         Output("data-pos-class-dist-plot", "figure"),
         Output("data-neg-class-dist-plot", "figure"),
         Input("data-feature-dropdown", "value"),
+        Input("data-agg-dropdown", "value"),
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("data-hist-slider", "value")
     )
-    def get_data_feat_distr(feature, subgroup, data, bins):
+    def get_data_feat_distr(feature, agg, subgroup, data, bins):
         """Produces a bar chart or line plot with the data feature values counts for the selected subgroup"""
         if not feature:
+            raise PreventUpdate
+        if not agg:
             raise PreventUpdate
         if subgroup is None:
             raise PreventUpdate
@@ -680,7 +699,7 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
             raise PreventUpdate
         
         y_true = y_true_global_test.copy()
-        return get_data_distr_charts(X_test, y_true, sg_feature, feature, description, bins)
+        return get_data_distr_charts(X_test, y_true, sg_feature, feature, description, bins, agg)
         
 
     # Get feat-table-col

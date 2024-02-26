@@ -222,17 +222,17 @@ def get_data_table(subgroup_description, y_true, y_pred, y_pred_prob, qf_metric,
     return data_table
     
 
-def get_data_distr_charts(X, y_true, sg_feature, feature, description, nbins=20):
+def get_data_distr_charts(X, y_true, sg_feature, feature, description, nbins=20, agg="percentage"):
     """For positive and negative predictions, returns a figure with the data distribution for the feature values of the selected feature in the subgroup and the baseline"""
     pos_filter = (y_true == 1)
-    chart1 = get_data_distr_chart(X[pos_filter], sg_feature, feature, description, nbins)
+    chart1 = get_data_distr_chart(X[pos_filter], sg_feature, feature, description, nbins, agg)
     chart1.update_layout(title="Positive class: Data distribution for " + feature + f" in the subgroup ({description}) and the baseline for positive predictions")
-    chart2 = get_data_distr_chart(X[~pos_filter], sg_feature, feature, description, nbins)
+    chart2 = get_data_distr_chart(X[~pos_filter], sg_feature, feature, description, nbins, agg)
     chart2.update_layout(title="Negative class: Data distribution for " + feature + f" in the subgroup ({description}) and the baseline for negative predictions")
     return chart1, chart2
 
 
-def get_data_distr_chart(X, sg_feature, feature, description, nbins=20):
+def get_data_distr_chart(X, sg_feature, feature, description, nbins=20, agg="percentage"):
     """Returns a figure with the data distribution for the feature values of the selected feature in the subgroup and the baseline"""
     X_sg = X[sg_feature].copy()
     fig = go.Figure()
@@ -242,8 +242,7 @@ def get_data_distr_chart(X, sg_feature, feature, description, nbins=20):
         go.Histogram(
             x=X[feature],
             name="Baseline",
-            # marker_color="lightgreen",
-            histnorm="percent",
+            histnorm="percent" if agg == "percentage" else "",
             nbinsx=nbins,
         )
     )
@@ -253,8 +252,7 @@ def get_data_distr_chart(X, sg_feature, feature, description, nbins=20):
         go.Histogram(
             x=X_sg[feature],
             name="Subgroup",
-            # marker_color="indianred",
-            histnorm="percent",
+            histnorm="percent" if agg == "percentage" else "",
             nbinsx=nbins,
         )
     )
@@ -263,7 +261,7 @@ def get_data_distr_chart(X, sg_feature, feature, description, nbins=20):
     fig.update_layout(
         title="Data distribution for " + feature + f" in the subgroup ({description}) and the baseline",
         xaxis_title=feature,
-        yaxis_title="Percentage of data in respective group",
+        yaxis_title=agg.capitalize() + " of data in respective group",
     )
 
     return fig
