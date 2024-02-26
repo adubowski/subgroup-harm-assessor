@@ -41,6 +41,15 @@ def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
 
     X = X.drop(cols_to_drop, axis=1, errors="ignore")
 
+    # Fill missing values - "missing" for categorical, mean for numerical
+    for col in X.columns:
+        if X[col].dtype.name == "category":
+            X[col] = X[col].cat.add_categories("missing").fillna("missing")
+        elif X[col].dtype.name == "object":
+            X[col] = X[col].fillna("missing")
+        else:
+            X[col] = X[col].fillna(X[col].mean())
+
     # Get target as 1/0
     y_true = (d.target == target) * 1
     return X, y_true
