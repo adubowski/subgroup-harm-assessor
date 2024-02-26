@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import auc, average_precision_score, precision_recall_curve, roc_auc_score, roc_curve
 from metrics import Y_PRED_METRICS, get_quality_metric_from_str, get_name_from_metric_str, miscalibration_score
-from scipy.stats import ks_2samp
+from scipy.stats import ks_2samp, wasserstein_distance
 
 COLS_TO_SHOW = [
     "quality",
@@ -443,7 +443,7 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
     return fig
 
 
-def get_feat_table(shap_values_df, sg_feature, sensitivity=4):
+def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
     """Returns a data table with the feature contributions to the model loss summary and tests for significance"""
 
     sg_shap_values_df = shap_values_df[sg_feature]
@@ -461,7 +461,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4):
     shap_values_df_std.columns = ["Baseline", "Subgroup"]
     
     # Get the p-value of the shap values
-    shap_values_df_p = pd.DataFrame(index=shap_values_df_mean.index, columns=["p_value"])
+    shap_values_df_p = pd.DataFrame(index=shap_values_df_mean.index, columns=["KS_p_value"])
 
     # Round shap values to 5 decimal places
     shap_values_df = shap_values_df.round(sensitivity)
@@ -469,17 +469,28 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4):
 
     for feature in shap_values_df_mean.index:
         # Run KS test
-        _, p_value = ks_2samp(shap_values_df[feature], sg_shap_values_df[feature])
-        shap_values_df_p.loc[feature, "p_value"] = p_value.round(6)
+        statistic, p_value = ks_2samp(shap_values_df[feature], sg_shap_values_df[feature])
+        shap_values_df_p.loc[feature, "KS_p_value"] = p_value.round(6)
+        shap_values_df_p.loc[feature, "KS_statistic"] = statistic
+
+        # Calculate Wasserstein distance
+        wasserstein_dist = wasserstein_distance(shap_values_df[feature], sg_shap_values_df[feature])
+        shap_values_df_p.loc[feature, "Wasserstein_distance"] = wasserstein_dist.round(6)
+
+    shap_values_df_p = shap_values_df_p.round(6)
     
     # Merge the dataframes
     df = shap_values_df_mean.merge(shap_values_df_std, left_index=True, right_index=True)
     df = df.merge(shap_values_df_p, left_index=True, right_index=True)
     df = df.reset_index()
-    df.columns = ["Feature", "Baseline_avg", "Subgroup_avg", "Baseline_std", "Subgroup_std", "KS test p-value"]
+    df.columns = ["Feature", "Baseline_avg", "Subgroup_avg", "Baseline_std", "Subgroup_std", "KS p-value", "KS statistic", "Wasserstein dist"]
+
+    df["Cohen's d"] = (df["Subgroup_avg"] - df["Baseline_avg"]) / np.sqrt((df["Baseline_std"] ** 2 + df["Subgroup_std"] ** 2) / 2)
+    df["Cohen's d"] = df["Cohen's d"].round(5)
+
 
     # Order df rows based on the p-value and the mean
-    df = df.sort_values(by=["KS test p-value", "Subgroup_avg"], ascending=[True, False])
+    df = df.sort_values(by=["KS p-value", "KS statistic"], ascending=[True, False])
 
     # Merge avg and std columns
     df["Baseline"] = df["Baseline_avg"].astype(str) + " ± " + df["Baseline_std"].astype(str)
@@ -487,7 +498,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4):
     df = df.drop(columns=["Baseline_avg", "Subgroup_avg", "Baseline_std", "Subgroup_std"])
 
     # Reorder columns
-    df = df[["Feature", "Baseline", "Subgroup", "KS test p-value"]]
+    df = df[["Feature", "Baseline", "Subgroup", "KS p-value", "KS statistic", "Cohen's d", "Wasserstein dist"]]
 
     # Generate a data table with the feature contributions to the model loss
     data_table = dash_table.DataTable(
@@ -497,7 +508,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4):
         # Format p-values in bold font if below 0.05
         style_data_conditional=[
             {
-                'if': {'filter_query': '{KS test p-value} < 0.01'},
+                'if': {'filter_query': "{KS p-value} < " + str(alpha)},
                 'fontWeight': 'bold'
             }
         ],

@@ -404,12 +404,16 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
                                 ]), 
                                 html.Br(),
                                 dbc.Col([
+                                    html.H6("Select significance level for the KS test (Data table rows in bold are significant at the selected level): "),
+                                    dcc.Slider(
+                                        0.01, 0.1, 0.01, value=0.05, id="feat-alpha-slider"
+                                    ),
                                     # Add slider for sensitivity of the test
-                                    html.H6("Select sensitivity for the KS test (Data table rows in bold are significant at the 0.01 level): "),
+                                    html.H6("Select sensitivity for the KS test: "),
                                     dcc.Slider(
                                         1, 7, 1, value=1, id="feat-sensitivity-slider"
                                     ),
-                                    html.H6("Sensitivity is the level of granularity (rounding) of the data in the KS test to avoid minor differences between distributions. The larger the subgroup, the smaller should the sensitivity be for the test."),
+                                    html.H6("Sensitivity is the level of granularity (rounding) of the data in the KS test to avoid minor differences between distributions."),
                                 ]),
                             ]),
                         ],
@@ -709,19 +713,22 @@ def run_app(n_samples: int, dataset: str, bias: Union[str, bool] = False, random
         Output("feat-table-col", "children"),
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
+        Input("feat-alpha-slider", "value"),
         Input("feat-sensitivity-slider", "value")
     )
-    def get_feat_table_col(subgroup, data, sensitivity):
+    def get_feat_table_col(subgroup, data, alpha, sensitivity):
         """Returns the feature contributions table for the selected subgroup"""
         if subgroup is None:
             raise PreventUpdate
+        if not alpha:
+            alpha = 0.05
         if len(data['descriptions']) == 0:
             print("Error: No subgroups found. This should not happen.")
             raise PreventUpdate
         
         sg_feature = pd.read_json(data['sg_features'][subgroup], typ='series')
         shap_df =shap_logloss_df_global.copy()
-        return get_feat_table(shap_values_df=shap_df, sg_feature=sg_feature, sensitivity=sensitivity)
+        return get_feat_table(shap_values_df=shap_df, sg_feature=sg_feature, sensitivity=sensitivity, alpha=alpha)
     
     # Get plots based on the subgroup selection
     @app.callback(
