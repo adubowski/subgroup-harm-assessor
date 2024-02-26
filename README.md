@@ -20,5 +20,9 @@ To see all available options, you can use the CLI:
 python app.py --help
 ```
 
-# Loading own dataset
+## Loading own dataset
 To load your own dataset, please edit the `import_dataset` function in load.py, retaining the same function signature (returning X and y_true).
+
+## Known issues:
+Currently, there are some non-critical issues with the project:
+- When switching tabs, the height of the plots can switch to the default 500px. It can be fixed by reselecting the subgroup (which regenerates the plots).

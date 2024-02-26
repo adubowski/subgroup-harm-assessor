@@ -63,7 +63,7 @@ def plot_pr_curves(y_true, y_pred, y_pred_prob, sg_feature, title=None):
     if title:
         fig.update_layout(title=title)
     # Update height 
-    # fig.update_layout(height=550)
+    fig.update_layout(height=550)
     return fig
 
 
@@ -110,7 +110,7 @@ def plot_roc_curves(y_true, y_pred_prob, sg_feature, title=None):
     if title:
         fig.update_layout(title=title)
     # Update height 
-    # fig.update_layout(height=550)
+    fig.update_layout(height=550)
     return fig
 
 
@@ -144,7 +144,7 @@ def plot_calibration_curve(
     fig.update_xaxes(title_text="Mean predicted probability")
     fig.update_yaxes(title_text="Fraction of positives")
     # Update height
-    # fig.update_layout(height=750)
+    fig.update_layout(height=550)
     return fig
 
 
@@ -178,7 +178,7 @@ def get_sg_hist(y_df_local, categories=["TN", "FN", "TP", "FP"], title=None):
     sg_hist.layout.xaxis.fixedrange = True
     sg_hist.layout.yaxis.fixedrange = True
     # Update histogram height
-    # sg_hist.update_layout(height=600)
+    sg_hist.update_layout(height=600)
     return sg_hist
 
 
@@ -265,8 +265,6 @@ def get_data_distr_chart(X, sg_feature, feature, description, nbins=20):
         xaxis_title=feature,
         yaxis_title="Percentage of data in respective group",
     )
-    # Update height
-    # fig.update_layout(height=600)
 
     return fig
     
@@ -387,7 +385,7 @@ def get_feat_bar(shap_values_df, sg_feature) -> go.Figure:
             "The lower the value, the higher its contribution to model's discriminative and calibration power.",
         yaxis_title="Mean Loss SHAP value - feature contribution to loss <br> With standard deviation error bars",
         xaxis_title="Feature",
-        # height=700,
+        height=600,
     )
     fig.update_xaxes(categoryorder='category ascending')
     # Turn y labels 45 degrees
@@ -433,7 +431,7 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
         title="Feature contributions to model loss for subgroup and baseline. <br> " +
             "The lower the value, the higher its contribution to model's discriminative and calibration power.",
         hover_data=shap_values_df.columns,
-        height=700,
+        height=600,
     )
 
     # Update the fig
