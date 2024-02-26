@@ -1,0 +1,85 @@
+body {
+    background-color: #f9f9f9;
+    color: #333333;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    margin: 5px;
+}
+.zoom
+{
+    zoom: 70%;
+}
+#left-column {
+    padding: 2px 0.6rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+#right-column {
+    padding: 0 0.2rem;
+    min-height: 100vh;
+}
+
+h5 {
+    color: #2c8cff;
+    font-weight: 300;
+    margin: 10px;
+}
+h6 {
+    color: #333333;
+    font-size: 300;
+    font-weight: bold;
+    margin: 10px;
+}
+
+#intro {
+    margin: 20px 0px;
+    text-align: justify;
+}
+
+#control-card label {
+    font-weight: bold;
+}
+.tabs {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 0.6rem;
+    height: 1vh;
+}
+.graph_card {
+    background-color: white;
+    border-radius: 0.675rem;
+    padding: 0.6rem;
+    margin: 0.6rem;
+    margin-top: 10px;
+}
+
+.graph_card h6 {
+    margin:  0 7px;
+    padding-bottom: 7px;
+    border-bottom:  1px solid #ccc;
+}
+
+.modal {
+    position: fixed; 
+    z-index: 1002; /* Sit on top, including modebar which has z=1001 */
+    left: 0;
+    top: 0;
+    width: 30%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0, 0, 0, 0.6); /* Black w/ opacity */
+
+}
+
+.modal-content {
+    margin: 10px;
+    height: 600px;
+    padding: 10px;
+    background-color: #c58797;
+}
+
+.column_left {
+    border-right: 1px solid #333333;
+  }

@@ -1,0 +1,3 @@
+[submodule "fairsd"]
+	path = fairsd
+	url = https://github.com/adubowski/fairsd.git
