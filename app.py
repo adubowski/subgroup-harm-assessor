@@ -16,12 +16,13 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 from dash.exceptions import PreventUpdate
 
-from eval import (add_bias, get_classifier, get_fairsd_result_set, load_data, get_shap_logloss)
+from load import (add_bias, get_classifier, get_fairsd_result_set, load_data, get_shap_logloss)
 from dash_app.config import APP_NAME
 from dash_app.main import app
 from dash_app.views.confusion_matrix import CMchart
 from dash_app.views.menu import get_subgroup_dropdown_options
-from plot import get_data_distr_chart, get_data_distr_charts, get_data_table, get_feat_box, get_feat_shap_violin_plots, get_feat_table, get_sg_hist, plot_calibration_curve, plot_roc_curves
+from plot import get_data_distr_charts, get_data_table, get_feat_box, get_feat_shap_violin_plots, get_feat_table, \
+    get_sg_hist, plot_calibration_curve, plot_roc_curves
 from metrics import Y_PRED_METRICS, get_qf_from_str, get_quality_metric_from_str, sort_quality_metrics_df
 
 

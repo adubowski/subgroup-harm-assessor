@@ -1,15 +1,9 @@
-from typing import Callable, Union
-
 import numpy as np
 import pandas as pd
 import shap
 from fairlearn.metrics import make_derived_metric
-from scipy.special import kl_div
-from scipy.stats import kstest
 from sklearn.metrics import (f1_score, precision_score, recall_score,
                              roc_auc_score)
-
-from fairsd.fairsd.algorithms import ResultSet
 
 roc_auc_diff = make_derived_metric(metric=roc_auc_score, transform="difference")
 f1_score_diff = make_derived_metric(metric=f1_score, transform="difference")

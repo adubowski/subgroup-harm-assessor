@@ -19,3 +19,6 @@ To see all available options, you can use the CLI:
 ```bash
 python app.py --help
 ```
+
+# Loading own dataset
+To load your own dataset, please edit the `import_dataset` function in load.py, retaining the same function signature (returning X and y_true).

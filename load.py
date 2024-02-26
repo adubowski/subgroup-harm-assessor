@@ -15,14 +15,7 @@ from fairsd import fairsd
 from fairsd.fairsd.algorithms import ResultSet
 
 
-def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-num"], train_split=True):
-    """Load data from UCI Adult dataset.
-    Args:
-        dataset (str): Dataset to be loaded, currently only Adult and German Credit datasets are supported
-        n_samples (int, optional): Number of samples to load. Select 0 to load all.
-        cols_to_drop (list, optional): Columns to drop from dataset. Defaults to ["fnlwgt", "education-num"].
-        train_split (bool, optional): Flag whether to split the number of selected data samples into train and test 
-    """
+def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
     # Import dataset
     if dataset == "adult":
         dataset_id = 1590
@@ -37,21 +30,33 @@ def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-n
         dataset_id = 43978
         target = 1
     else:
-        raise NotImplementedError("Only adult and german credit datasets are supported now")
+        raise NotImplementedError("Only the following datasets are supported now: adult, german_credit, heloc, credit.")
     
     d = fetch_openml(
         data_id=dataset_id, 
         as_frame=True, parser='auto')
     X = d.data
 
-    # Get categorical feature names
-    cat_features = X.select_dtypes(include=["category"]).columns
-
     X = X.drop(cols_to_drop, axis=1, errors="ignore")
 
     # Get target as 1/0
     y_true = (d.target == target) * 1
+    return X, y_true
+
+
+def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-num"], train_split=True):
+    """Load data from UCI Adult dataset.
+    Args:
+        dataset (str): Dataset to be loaded, currently only Adult and German Credit datasets are supported
+        n_samples (int, optional): Number of samples to load. Select 0 to load all.
+        cols_to_drop (list, optional): Columns to drop from dataset. Defaults to ["fnlwgt", "education-num"].
+        train_split (bool, optional): Flag whether to split the number of selected data samples into train and test 
+    """
+    X, y_true = import_dataset(dataset, cols_to_drop=cols_to_drop)
     
+    # Get categorical feature names
+    cat_features = X.select_dtypes(include=["category"]).columns
+
     # One-hot encoding
     onehot_X = pd.get_dummies(X) * 1
 
@@ -84,7 +89,6 @@ def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-n
     
     else:
         return X, y_true, y_true, onehot_X, onehot_X, cat_features
-
 
 
 def add_bias(bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgroup: pd.Series) -> pd.Series:
