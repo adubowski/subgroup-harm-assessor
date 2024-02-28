@@ -3,12 +3,13 @@ import plotly.express as px
 from explainerdashboard.explainer_plots import plotly_confusion_matrix
 from sklearn.metrics import confusion_matrix
 
+
 class CMchart(html.Div):
     def __init__(self, name, y_true, y_pred):
         """
-       :param name: name of the plot
-       :param df: dataframe
-       """
+        :param name: name of the plot
+        :param df: dataframe
+        """
         self.html_id = name.lower().replace(" ", "-")
         self.name = name
         self.cm = confusion_matrix(y_true, y_pred)
@@ -19,15 +20,10 @@ class CMchart(html.Div):
         super().__init__()
 
     def update(self):
-
-        self.fig = plotly_confusion_matrix(
-            self.cm
-        )
+        self.fig = plotly_confusion_matrix(self.cm)
 
         self.fig.update_layout(
-            yaxis_zeroline=False,
-            xaxis_zeroline=False,
-            dragmode='select'
+            yaxis_zeroline=False, xaxis_zeroline=False, dragmode="select"
         )
         self.fig.update_xaxes(fixedrange=True)
         self.fig.update_yaxes(fixedrange=True)

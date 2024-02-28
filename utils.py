@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import shap
 from fairlearn.metrics import make_derived_metric
-from sklearn.metrics import (f1_score, precision_score, recall_score,
-                             roc_auc_score)
+from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
 roc_auc_diff = make_derived_metric(metric=roc_auc_score, transform="difference")
 f1_score_diff = make_derived_metric(metric=f1_score, transform="difference")
@@ -11,7 +10,10 @@ precision_diff = make_derived_metric(metric=precision_score, transform="differen
 recall_diff = make_derived_metric(metric=recall_score, transform="difference")
 
 
-def combine_all_one_hot_shap_logloss(sage_values_df: pd.DataFrame, target_features, cat_features):
+def combine_all_one_hot_shap_logloss(
+    sage_values_df: pd.DataFrame, target_features, cat_features
+):
+    """Combine all one hot encoded features into parent features"""
     sage_values_df = sage_values_df.copy()
     # Combine one hot encoded features with sage values
     non_cat_features = [col for col in target_features if col not in cat_features]
@@ -114,4 +116,3 @@ def drop_description_attributes(shap_values_df, description):
     """
     attributes = description.get_attributes()
     shap_values_df.drop(attributes, axis=1, errors="ignore", inplace=True)
-

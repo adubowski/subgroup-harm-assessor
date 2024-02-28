@@ -23,7 +23,7 @@ def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
         dataset_id = 1590
         target = ">50K"
     elif dataset in ("credit_g", "german", "german_credit"):
-        dataset_id = 31 # 31 for German credit, 1590 for Adult
+        dataset_id = 31  # 31 for German credit, 1590 for Adult
         target = "good"
     elif dataset == "heloc":
         dataset_id = 45023
@@ -32,11 +32,11 @@ def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
         dataset_id = 43978
         target = 1
     else:
-        raise NotImplementedError("Only the following datasets are supported now: adult, german_credit, heloc, credit.")
-    
-    d = fetch_openml(
-        data_id=dataset_id, 
-        as_frame=True, parser='auto')
+        raise NotImplementedError(
+            "Only the following datasets are supported now: adult, german_credit, heloc, credit."
+        )
+
+    d = fetch_openml(data_id=dataset_id, as_frame=True, parser="auto")
     X = d.data
 
     X = X.drop(cols_to_drop, axis=1, errors="ignore")
@@ -55,16 +55,21 @@ def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
     return X, y_true
 
 
-def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-num"], train_split=True):
+def load_data(
+    dataset="adult",
+    n_samples=0,
+    cols_to_drop=["fnlwgt", "education-num"],
+    train_split=True,
+):
     """Load data from UCI Adult dataset.
     Args:
         dataset (str): Dataset to be loaded, currently only Adult and German Credit datasets are supported
         n_samples (int, optional): Number of samples to load. Select 0 to load all.
         cols_to_drop (list, optional): Columns to drop from dataset. Defaults to ["fnlwgt", "education-num"].
-        train_split (bool, optional): Flag whether to split the number of selected data samples into train and test 
+        train_split (bool, optional): Flag whether to split the number of selected data samples into train and test
     """
     X, y_true = import_dataset(dataset, cols_to_drop=cols_to_drop)
-    
+
     # Get categorical feature names
     cat_features = X.select_dtypes(include=["category"]).columns
 
@@ -76,15 +81,16 @@ def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-n
         X = X.iloc[:n_samples]
         y_true = y_true.iloc[:n_samples]
         onehot_X = onehot_X.iloc[:n_samples]
-    
+
     if train_split:
-        X_train, X_test, y_true_train, y_true_test, onehot_X_train, onehot_X_test = train_test_split(
-            X, 
-            y_true, 
-            onehot_X,
-            test_size=0.3, 
-            random_state=42
-        )
+        (
+            X_train,
+            X_test,
+            y_true_train,
+            y_true_test,
+            onehot_X_train,
+            onehot_X_test,
+        ) = train_test_split(X, y_true, onehot_X, test_size=0.3, random_state=42)
         # Reset indices
         X_train.reset_index(inplace=True, drop=True)
         X_test.reset_index(inplace=True, drop=True)
@@ -96,51 +102,70 @@ def load_data(dataset="adult", n_samples=0, cols_to_drop=["fnlwgt", "education-n
         X_test.reset_index(inplace=True, drop=True)
         y_true_test.reset_index(inplace=True, drop=True)
 
-        return X_test, y_true_train, y_true_test, onehot_X_train, onehot_X_test, cat_features
-    
+        return (
+            X_test,
+            y_true_train,
+            y_true_test,
+            onehot_X_train,
+            onehot_X_test,
+            cat_features,
+        )
+
     else:
         return X, y_true, y_true, onehot_X, onehot_X, cat_features
 
 
-def add_bias(bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgroup: pd.Series) -> pd.Series:
+def add_bias(
+    bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgroup: pd.Series
+) -> pd.Series:
     """Add bias to the dataset."""
 
     if bias == "random":
         # Currently we only do the eval on a selected feature
-        feature = 'age'
+        feature = "age"
         std_val = X_test[feature].std()
         mean_val = X_test[feature].mean()
-        X_test.loc[subgroup, feature] = np.random.normal(mean_val, std_val, sum(subgroup))
-        onehot_X_test.loc[subgroup, feature] = np.random.normal(mean_val, std_val, sum(subgroup))
+        X_test.loc[subgroup, feature] = np.random.normal(
+            mean_val, std_val, sum(subgroup)
+        )
+        onehot_X_test.loc[subgroup, feature] = np.random.normal(
+            mean_val, std_val, sum(subgroup)
+        )
     elif bias == "mean":
-        feature = 'age'
+        feature = "age"
         # Select a random subset of the data
         # Add the mean of the feature to the subset
         X_test.loc[subgroup, feature] = mean_val
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].mean()
     elif bias == "median":
-        feature = 'age'
+        feature = "age"
         # Select a random subset of the data
         # Add the median of the feature to the subset
         X_test.loc[subgroup, feature] = X_test[feature].median()
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].median()
     elif bias in ("bin", "binning"):
-        feature = 'age'
+        feature = "age"
         # Select a random subset of the data
         # Add the binning of the feature to the subset
-        X_test.loc[subgroup, feature] = X_test[subgroup].apply(lambda x: x[feature] // 10 * 10, axis=1)
-        onehot_X_test.loc[subgroup, feature] = onehot_X_test[subgroup].apply(lambda x: x // 10 * 10, axis=1)
+        X_test.loc[subgroup, feature] = X_test[subgroup].apply(
+            lambda x: x[feature] // 10 * 10, axis=1
+        )
+        onehot_X_test.loc[subgroup, feature] = onehot_X_test[subgroup].apply(
+            lambda x: x // 10 * 10, axis=1
+        )
 
     elif bias == "sum":
-        feature = 'age'
+        feature = "age"
         std_val = X_test[feature].std()
         # Select a random subset of the data
         # Add the standard deviation of the feature to the subset
-        X_test.loc[subgroup, feature] = X_test[subgroup].apply(lambda x: x[feature] + std_val, axis=1)
+        X_test.loc[subgroup, feature] = X_test[subgroup].apply(
+            lambda x: x[feature] + std_val, axis=1
+        )
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].sum()
-    
+
     elif bias == "swap":
-        feature = 'marital-status'
+        feature = "marital-status"
         # Swap the values of the feature to another value in the same column, onehot_X_test is one hot encoded so we need to swap the entire column for the feature
         value_selected = np.random.choice(X_test[feature].unique(), sum(subgroup))
         value_selected = "Divorced"
@@ -149,11 +174,21 @@ def add_bias(bias: str, X_test: pd.DataFrame, onehot_X_test: pd.DataFrame, subgr
         onehot_X_test.loc[subgroup, onehot_X_test.columns.str.startswith(feature)] = 0
         onehot_X_test.loc[subgroup, [feature + "_" + value_selected]] = 1
     else:
-        raise ValueError(f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum, swap.")
-    print(f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted: {len(subgroup)}.")
+        raise ValueError(
+            f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum, swap."
+        )
+    print(
+        f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted: {len(subgroup)}."
+    )
 
 
-def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot_X_test: pd.DataFrame, with_names=True, model="rf"):
+def get_classifier(
+    onehot_X_train: pd.DataFrame,
+    y_true_train: pd.Series,
+    onehot_X_test: pd.DataFrame,
+    with_names=True,
+    model="rf",
+):
     """Get a decision tree classifier for the given dataset.
 
     Args:
@@ -163,14 +198,16 @@ def get_classifier(onehot_X_train: pd.DataFrame, y_true_train: pd.Series, onehot
     """
     # Training the classifier
     if model == "rf":
-        classifier = RandomForestClassifier(n_estimators=20, max_depth=8, random_state=0)
+        classifier = RandomForestClassifier(
+            n_estimators=20, max_depth=8, random_state=0
+        )
     # TODO: Add XGBoost
     else:
         classifier = DecisionTreeClassifier(min_samples_leaf=30, max_depth=8)
     if not with_names:
         onehot_X_train = onehot_X_train.values
         onehot_X_test = onehot_X_test.values
-    
+
     print("Training the classifier...")
     classifier.fit(onehot_X_train, y_true_train)
 
@@ -188,7 +225,7 @@ def combine_shap_one_hot(shap_values, X_columns, cat_features):
             col.startswith(cat_feat) and col not in non_cat_features
             for col in shap_values.feature_names
         ]
-        
+
         shap_values = combine_one_hot(
             shap_values, cat_feat, col_masks, return_original=False
         )
@@ -210,19 +247,23 @@ def get_shap_values(classifier, d_train, X, cat_features, combine_cat_features=T
     return shap_values
 
 
-def get_shap_logloss(classifier, d_train, y_true, X, cat_features, combine_cat_features=True):
+def get_shap_logloss(
+    classifier, d_train, y_true, X, cat_features, combine_cat_features=True
+):
     """Get shap values of the model log loss for a given classifier and dataset.
     Combines one-hot encoded categorical features into original features."""
     explainer_bg_100 = shap.TreeExplainer(
-        classifier, 
+        classifier,
         shap.sample(d_train, 100),
-        feature_perturbation="interventional", 
-        model_output="log_loss"
+        feature_perturbation="interventional",
+        model_output="log_loss",
     )
     shap_values_logloss_all = explainer_bg_100.shap_values(d_train, y_true)
     shap_logloss_df = pd.DataFrame(shap_values_logloss_all[1], columns=d_train.columns)
     if combine_cat_features:
-        shap_logloss_df = combine_all_one_hot_shap_logloss(shap_logloss_df, X.columns, cat_features)
+        shap_logloss_df = combine_all_one_hot_shap_logloss(
+            shap_logloss_df, X.columns, cat_features
+        )
     return shap_logloss_df
 
 
@@ -239,7 +280,7 @@ def get_fairsd_result_set(
     **kwargs,
 ) -> ResultSet:
     """Get result set from fairsd DSSD task
-    
+
     Args:
         X (pd.DataFrame): Dataset
         y_true (pd.Series): True labels
@@ -248,9 +289,9 @@ def get_fairsd_result_set(
         depth (int, optional): Depth of subgroup discovery. Defaults to 2.
         min_support (int, optional): Minimum support. Defaults to 30.
         result_set_size (int, optional): Size of result set. Defaults to 10.
-        kwargs: Additional arguments to pass to fairsd.SubgroupDiscoveryTask, 
+        kwargs: Additional arguments to pass to fairsd.SubgroupDiscoveryTask,
             including result_set_ratio and logging_level (as defined by logging module)
-        """
+    """
     task = fairsd.SubgroupDiscoveryTask(
         X,
         y_true,
@@ -260,10 +301,10 @@ def get_fairsd_result_set(
         result_set_size=result_set_size,
         min_quality=min_quality,
         min_support=min_support,
-        **kwargs
+        **kwargs,
     )
-    if 'logging_level' in kwargs:
-        logging_level = kwargs['logging_level']
+    if "logging_level" in kwargs:
+        logging_level = kwargs["logging_level"]
     else:
         logging_level = logging.WARNING
 
