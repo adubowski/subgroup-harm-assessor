@@ -152,7 +152,6 @@ def run_app(
                                     dbc.Col(
                                         dcc.Dropdown(
                                             id="fairness-metric-dropdown",
-                                            # maxHeight=900, # FIXME: Help needed. Doesn't work well because other figures rendered after the dropdown block the background of the dropdown
                                             options=[
                                                 {
                                                     "label": "Equalized Odds Difference",
@@ -412,7 +411,7 @@ def run_app(
                                                         id="calibration_curve",
                                                     ),
                                                     html.H6(
-                                                        "Select (max) number of bins for the calibration plot:"
+                                                        "Select number of bins for the calibration plot:"
                                                     ),
                                                     dcc.Slider(
                                                         4,
@@ -464,20 +463,6 @@ def run_app(
                                 [
                                     dbc.Col(
                                         [
-                                            html.Div(
-                                                id="feat-table-col",
-                                                className="six-columns",
-                                                children="Data table for feature contributions. Select a subgroup to update the table.",
-                                                style={
-                                                    "align-items": "center",
-                                                    "height": "fit-content",
-                                                },
-                                            ),
-                                        ]
-                                    ),
-                                    html.Br(),
-                                    dbc.Col(
-                                        [
                                             html.H6(
                                                 "Select significance level for the KS test (Data table rows in bold are significant at the selected level): "
                                             ),
@@ -490,17 +475,32 @@ def run_app(
                                             ),
                                             # Add slider for sensitivity of the test
                                             html.H6(
-                                                "Select sensitivity for the KS test: "
+                                                "Select rounding level for the KS test: "
                                             ),
                                             dcc.Slider(
-                                                1,
+                                                0,
                                                 7,
                                                 1,
                                                 value=1,
                                                 id="feat-sensitivity-slider",
                                             ),
                                             html.H6(
-                                                "Sensitivity is the level of granularity (rounding) of the data in the KS test to avoid minor differences between distributions."
+                                                "Rounding level is the level at which SHAP values should be rounded because they are considered 'distinct'," +
+                                                  "to avoid minor differences between distributions in the KS test."
+                                            ),
+                                        ]
+                                    ),
+                                    html.Br(),
+                                    dbc.Col(
+                                        [
+                                            html.Div(
+                                                id="feat-table-col",
+                                                className="six-columns",
+                                                children="Data table for feature contributions. Select a subgroup to update the table.",
+                                                style={
+                                                    "align-items": "center",
+                                                    "height": "fit-content",
+                                                },
                                             ),
                                         ]
                                     ),

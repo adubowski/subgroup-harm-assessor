@@ -127,7 +127,7 @@ def trim_transform_from_str(metric: str) -> str:
     return metric
 
 
-def get_quality_metric_from_str(metric: str) -> str:
+def get_quality_metric_from_str(metric: str) -> Callable[[pd.Series, pd.Series], float]:
     """Get the quality metric from a string."""
 
     if metric.split("_")[-1] == "diff" or metric.split("_")[-1] == "ratio":
@@ -185,15 +185,7 @@ def sort_quality_metrics_df(
     # If quality_metric ends with ratio
     if quality_metric.split("_")[-1] == "ratio":
         # if ratios are below 1.0, the metric is more significant the lower it is so we sort in ascending order
-        if result_set_df["metric_score"].max() < 1.0:
-            # Sort the result_set_df in ascending order based on the metric_score
-            result_set_df = result_set_df.sort_values(by="metric_score", ascending=True)
-        # if ratios are above 1.0, the metric is more significant the higher it is so we sort in descending order
-        else:
-            # Sort the result_set_df in descending order based on the metric_score
-            result_set_df = result_set_df.sort_values(
-                by="metric_score", ascending=False
-            )
+        result_set_df = result_set_df.sort_values(by="quality", ascending=False)
     elif quality_metric.split("_")[-1] in ("difference", "diff"):
         # If metric is a loss (lower is better)
         if (

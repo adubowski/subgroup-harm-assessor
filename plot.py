@@ -556,12 +556,10 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
         shap_values_df_p.loc[feature, "KS_statistic"] = statistic
 
         # Calculate Wasserstein distance
-        wasserstein_dist = wasserstein_distance(
-            shap_values_df[feature], sg_shap_values_df[feature]
-        )
-        shap_values_df_p.loc[feature, "Wasserstein_distance"] = wasserstein_dist.round(
-            6
-        )
+        # wasserstein_dist = wasserstein_distance(
+        #     shap_values_df[feature], sg_shap_values_df[feature]
+        # )
+        # shap_values_df_p.loc[feature, "Wasserstein_distance"] = wasserstein_dist.round(6)
 
     shap_values_df_p = shap_values_df_p.round(6)
 
@@ -579,7 +577,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
         "Subgroup_std",
         "KS p-value",
         "KS statistic",
-        "Wasserstein dist",
+        # "Wasserstein dist",
     ]
 
     df["Cohen's d"] = (df["Subgroup_avg"] - df["Baseline_avg"]) / np.sqrt(
@@ -588,7 +586,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
     df["Cohen's d"] = df["Cohen's d"].round(5)
 
     # Order df rows based on the p-value and the mean
-    df = df.sort_values(by=["KS p-value", "KS statistic"], ascending=[True, False])
+    df = df.sort_values(by=["KS statistic"], ascending=[False])
 
     # Merge avg and std columns
     df["Baseline"] = (
@@ -607,10 +605,10 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
             "Feature",
             "Baseline",
             "Subgroup",
-            "KS p-value",
-            "KS statistic",
             "Cohen's d",
-            "Wasserstein dist",
+            "KS statistic",
+            "KS p-value",
+            # "Wasserstein dist",
         ]
     ]
 

@@ -17,13 +17,16 @@ from fairsd import fairsd
 from fairsd.fairsd.algorithms import ResultSet
 
 
-def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
+def import_dataset(dataset):
+    """Import the dataset from OpenML and preprocess it."""
+    cols_to_drop = []
     # Import dataset
     if dataset == "adult":
         dataset_id = 1590
         target = ">50K"
+        cols_to_drop = ["fnlwgt", "education-num", "sex", "race", "native-country"]
     elif dataset in ("credit_g", "german", "german_credit"):
-        dataset_id = 31  # 31 for German credit, 1590 for Adult
+        dataset_id = 31
         target = "good"
     elif dataset == "heloc":
         dataset_id = 45023
@@ -58,7 +61,6 @@ def import_dataset(dataset, cols_to_drop=["fnlwgt", "education-num"]):
 def load_data(
     dataset="adult",
     n_samples=0,
-    cols_to_drop=["fnlwgt", "education-num"],
     train_split=True,
 ):
     """Load data from UCI Adult dataset.
@@ -68,7 +70,7 @@ def load_data(
         cols_to_drop (list, optional): Columns to drop from dataset. Defaults to ["fnlwgt", "education-num"].
         train_split (bool, optional): Flag whether to split the number of selected data samples into train and test
     """
-    X, y_true = import_dataset(dataset, cols_to_drop=cols_to_drop)
+    X, y_true = import_dataset(dataset)
 
     # Get categorical feature names
     cat_features = X.select_dtypes(include=["category"]).columns
@@ -123,7 +125,7 @@ def add_bias(
     if bias == "random":
         # Currently we only do the eval on a selected feature
         feature = "age"
-        std_val = X_test[feature].std()
+        std_val = X_test[feature].max() # We use max value as std for bigger impact
         mean_val = X_test[feature].mean()
         X_test.loc[subgroup, feature] = np.random.normal(
             mean_val, std_val, sum(subgroup)
@@ -135,7 +137,7 @@ def add_bias(
         feature = "age"
         # Select a random subset of the data
         # Add the mean of the feature to the subset
-        X_test.loc[subgroup, feature] = mean_val
+        X_test.loc[subgroup, feature] = X_test[feature].mean()
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].mean()
     elif bias == "median":
         feature = "age"
