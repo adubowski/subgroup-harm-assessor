@@ -486,7 +486,7 @@ def run_app(
                                             ),
                                             html.H6(
                                                 "Rounding level is the level at which SHAP values should be rounded because they are considered 'distinct'," +
-                                                  "to avoid minor differences between distributions in the KS test."
+                                                  " in order to avoid detecting statistically significant but minor differences between distributions in the KS test."
                                             ),
                                         ]
                                     ),

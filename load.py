@@ -19,6 +19,8 @@ from fairsd.fairsd.algorithms import ResultSet
 
 def import_dataset(dataset):
     """Import the dataset from OpenML and preprocess it."""
+
+    print("Loading data...")
     cols_to_drop = []
     # Import dataset
     if dataset == "adult":
