@@ -340,6 +340,7 @@ def get_data_distr_chart(
 def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbins=20):
     """Returns a figure with a violin plot for the feature value SHAP contributions in the subgroup and the baseline"""
     feature_type = "categorical"
+    orig_df = X.copy()
     # If data is continuous, we need to bin it
     if X[feature].dtype in [np.float64, np.int64]:
         X[feature] = pd.cut(X[feature], bins=nbins)
@@ -366,7 +367,8 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
             box_visible=True,
             meanline_visible=True,
             points="all",
-            hoverinfo="x+y+name",
+            text=orig_df.apply(lambda row: ' '.join(f'{i}:{v}' for i, v in row.items()), axis=1),
+            hoverinfo="y+text",
         )
     )
 
@@ -379,7 +381,7 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
             box_visible=True,
             meanline_visible=True,
             points="all",
-            hoverinfo="x+y+name",
+            text=orig_df[sg_feature].apply(lambda row: ' '.join(f'{i}:{v}' for i, v in row.items()), axis=1),            hoverinfo="y+text",
         )
     )
     slider_note = (
