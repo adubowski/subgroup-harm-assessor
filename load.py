@@ -94,7 +94,7 @@ def load_data(
             y_true_test,
             onehot_X_train,
             onehot_X_test,
-        ) = train_test_split(X, y_true, onehot_X, test_size=0.3, random_state=42)
+        ) = train_test_split(X, y_true, onehot_X, test_size=0.3, random_state=0)
         # Reset indices
         X_train.reset_index(inplace=True, drop=True)
         X_test.reset_index(inplace=True, drop=True)
