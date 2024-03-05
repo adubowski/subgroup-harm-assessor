@@ -74,7 +74,7 @@ def prepare_app(
         np.random.choice([True, False], size=len(X_test), p=[0.5, 0.5])
     )
 
-    if bias:
+    if dataset == "adult" and bias:
         add_bias(bias, X_test, onehot_X_test, random_subgroup)
 
     classifier, y_pred_prob = get_classifier(
@@ -339,7 +339,7 @@ def run_app(
                                         className="six columns",
                                         children=[
                                             html.H6(
-                                                "(Dis)advantaged Subgroup",
+                                                "Selected Subgroup",
                                                 style={
                                                     "border-bottom": "3px solid #d3d3d3"
                                                 },

@@ -157,8 +157,7 @@ def add_bias(
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[subgroup].apply(
             lambda x: x // 10 * 10, axis=1
         )
-
-    elif bias == "sum":
+    elif bias == "sum_std":
         feature = "age"
         std_val = X_test[feature].std()
         # Select a random subset of the data
@@ -170,16 +169,15 @@ def add_bias(
 
     elif bias == "swap":
         feature = "marital-status"
-        # Swap the values of the feature to another value in the same column, onehot_X_test is one hot encoded so we need to swap the entire column for the feature
-        value_selected = np.random.choice(X_test[feature].unique(), sum(subgroup))
-        value_selected = "Divorced"
+        # Swap the values of the feature to another value in the same column
+        value_selected = "Married-civ-spouse"
         X_test.loc[subgroup, feature] = value_selected
-        # Set all columns to 0
+        # Onehot_X_test is one hot encoded so we need to swap the entire column for the feature
         onehot_X_test.loc[subgroup, onehot_X_test.columns.str.startswith(feature)] = 0
         onehot_X_test.loc[subgroup, [feature + "_" + value_selected]] = 1
     else:
         raise ValueError(
-            f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum, swap."
+            f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum_std, swap."
         )
     print(
         f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted: {len(subgroup)}."

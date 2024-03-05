@@ -347,7 +347,6 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
     # Create a violin plot for the feature values
     fig = go.Figure()
 
-    # TODO: Add the violin plots next to each other instead of on top of each other
     # Add trace for baseline
     fig.add_trace(
         go.Violin(
@@ -395,7 +394,7 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
     else:
         fig.update_xaxes(categoryorder="category ascending")
     # Update height
-    fig.update_layout(height=900)
+    fig.update_layout(height=700)
     return fig
 
 
