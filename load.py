@@ -125,42 +125,38 @@ def add_bias(
     """Add bias to the dataset."""
 
     if bias == "random":
-        # Currently we only do the eval on a selected feature
-        feature = "age"
-        std_val = X_test[feature].max() # We use max value as std for bigger impact
+        feature = "capital-gain"
+        # Add random noise to the subset
+        std_val = X_test[feature].std()
         mean_val = X_test[feature].mean()
-        X_test.loc[subgroup, feature] = np.random.normal(
+        X_test.loc[subgroup, feature] += np.random.normal(
             mean_val, std_val, sum(subgroup)
         )
-        onehot_X_test.loc[subgroup, feature] = np.random.normal(
+        onehot_X_test.loc[subgroup, feature] += np.random.normal(
             mean_val, std_val, sum(subgroup)
         )
     elif bias == "mean":
         feature = "age"
-        # Select a random subset of the data
         # Add the mean of the feature to the subset
         X_test.loc[subgroup, feature] = X_test[feature].mean()
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].mean()
     elif bias == "median":
         feature = "age"
-        # Select a random subset of the data
         # Add the median of the feature to the subset
         X_test.loc[subgroup, feature] = X_test[feature].median()
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].median()
     elif bias in ("bin", "binning"):
         feature = "age"
-        # Select a random subset of the data
         # Add the binning of the feature to the subset
         X_test.loc[subgroup, feature] = X_test[subgroup].apply(
-            lambda x: x[feature] // 10 * 10, axis=1
+            lambda x: x[feature] // 20 * 20, axis=1
         )
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[subgroup].apply(
-            lambda x: x // 10 * 10, axis=1
+            lambda x: x // 20 * 20, axis=1
         )
     elif bias == "sum_std":
         feature = "age"
         std_val = X_test[feature].std()
-        # Select a random subset of the data
         # Add the standard deviation of the feature to the subset
         X_test.loc[subgroup, feature] = X_test[subgroup].apply(
             lambda x: x[feature] + std_val, axis=1
@@ -168,8 +164,10 @@ def add_bias(
         onehot_X_test.loc[subgroup, feature] = onehot_X_test[feature].sum()
 
     elif bias == "swap":
+        # Swap all values of the feature to another value in the same column
+        # feature = "education"
+        # value_selected = "Doctorate"
         feature = "marital-status"
-        # Swap the values of the feature to another value in the same column
         value_selected = "Married-civ-spouse"
         X_test.loc[subgroup, feature] = value_selected
         # Onehot_X_test is one hot encoded so we need to swap the entire column for the feature
@@ -180,7 +178,7 @@ def add_bias(
             f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum_std, swap."
         )
     print(
-        f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted: {len(subgroup)}."
+        f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted size: {sum(subgroup)}."
     )
 
 

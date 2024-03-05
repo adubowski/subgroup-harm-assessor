@@ -584,7 +584,6 @@ def run_app(
                                                         value=X_test.columns[0],
                                                         style={
                                                             "align-items": "center",
-                                                            "width": "50%",
                                                             "text-align": "center",
                                                         },
                                                     ),
@@ -611,12 +610,35 @@ def run_app(
                                                         value="percentage",
                                                         style={
                                                             "align-items": "center",
-                                                            "width": "50%",
                                                             "text-align": "center",
                                                         },
                                                     ),
                                                 ]
                                             ),
+                                            dbc.Col(
+                                                [
+                                                    # Add dropdown to select observed or predicted class
+                                                    html.H6("Select whether to show the distribution of predicted or observed classes."),
+                                                    dcc.Dropdown(
+                                                        id="data-label-dropdown",
+                                                            options=[
+                                                                {
+                                                                    "label": "Predictions",
+                                                                    "value": "predictions",
+                                                                },
+                                                                {
+                                                                    "label": "Observed",
+                                                                    "value": "observed",
+                                                                },
+                                                            ],
+                                                            value="predictions",
+                                                            style={
+                                                                "align-items": "center",
+                                                                "text-align": "center",
+                                                            },
+                                                    ),
+                                                ]
+                                            )
                                         ]
                                     ),
                                     html.Br(),
@@ -847,8 +869,10 @@ def run_app(
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("data-hist-slider", "value"),
+        Input("data-label-dropdown", "value"),
+        Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_data_feat_distr(feature, agg, subgroup, data, bins):
+    def get_data_feat_distr(feature, agg, subgroup, data, bins, label, threshold):
         """Produces a bar chart or line plot with the data feature values counts for the selected subgroup"""
         if not feature:
             raise PreventUpdate
@@ -859,7 +883,9 @@ def run_app(
         if not bins:
             logging.error("Error: No bins selected. This should not happen.")
             raise PreventUpdate
-
+        if not label:
+            logging.error("Error: No label selected for data charts. This should not happen.")
+            raise PreventUpdate
         try:
             description = data["descriptions"][subgroup]
             sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
@@ -867,7 +893,11 @@ def run_app(
             print("Subgroup not found. This should not happen.")
             raise PreventUpdate
 
-        y_true = y_true_global_test.copy()
+        if label == "predictions":
+            y_pred_prob = y_pred_prob_global.copy()
+            y_true = (y_pred_prob >= threshold).astype(int)
+        else:
+            y_true = y_true_global_test.copy()
         return get_data_distr_charts(
             X_test, y_true, sg_feature, feature, description, bins, agg
         )

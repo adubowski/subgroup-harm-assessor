@@ -168,6 +168,16 @@ def plot_calibration_curve(
                 hovertemplate="Mean predicted probability: %{x}<br>Fraction of positives: %{y}<br>Subgroup size: %{customdata}",
             )
         )
+    # Add perfect calibration line
+    fig.add_trace(
+        go.Scatter(
+            x=[0, 1],
+            y=[0, 1],
+            mode='lines',
+            name='Perfect Calibration',
+            line=dict(dash='dash')
+        )
+    )
     fig.update_layout(title="Calibration curves for the selected subgroup and baseline")
     fig.update_xaxes(title_text="Mean predicted probability")
     fig.update_yaxes(title_text="Fraction of positives")
@@ -275,7 +285,7 @@ def get_data_distr_charts(
     chart1.update_layout(
         title="Positive class: Data distribution for "
         + feature
-        + f" in the subgroup ({description}) and the baseline for positive predictions"
+        + f" in the subgroup ({description}) and the baseline for positive class"
     )
     chart2 = get_data_distr_chart(
         X[~pos_filter], sg_feature, feature, description, nbins, agg
@@ -283,7 +293,7 @@ def get_data_distr_charts(
     chart2.update_layout(
         title="Negative class: Data distribution for "
         + feature
-        + f" in the subgroup ({description}) and the baseline for negative predictions"
+        + f" in the subgroup ({description}) and the baseline for negative class"
     )
     return chart1, chart2
 
