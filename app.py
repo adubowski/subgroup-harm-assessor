@@ -157,34 +157,34 @@ def run_app(
                                                     "label": "Equalized Odds Difference",
                                                     "value": "equalized_odds_diff",
                                                 },
-                                                {
-                                                    "label": "Equalized Odds Ratio",
-                                                    "value": "equalized_odds_ratio",
-                                                },
+                                                # {
+                                                #     "label": "Equalized Odds Ratio",
+                                                #     "value": "equalized_odds_ratio",
+                                                # },
                                                 {
                                                     "label": "Avg Log Loss Difference",
                                                     "value": "average_log_loss_diff",
                                                 },
-                                                {
-                                                    "label": "Avg Log Loss Ratio",
-                                                    "value": "average_log_loss_ratio",
-                                                },
+                                                # {
+                                                #     "label": "Avg Log Loss Ratio",
+                                                #     "value": "average_log_loss_ratio",
+                                                # },
                                                 {
                                                     "label": "Brier Score Difference",
                                                     "value": "brier_score_diff",
                                                 },
-                                                {
-                                                    "label": "Brier Score Ratio",
-                                                    "value": "brier_score_ratio",
-                                                },
+                                                # {
+                                                #     "label": "Brier Score Ratio",
+                                                #     "value": "brier_score_ratio",
+                                                # },
                                                 {
                                                     "label": "AUROC (ROC AUC) Difference",
                                                     "value": "auroc_diff",
                                                 },
-                                                {
-                                                    "label": "AUROC (ROC AUC) Ratio",
-                                                    "value": "auroc_ratio",
-                                                },
+                                                # {
+                                                #     "label": "AUROC (ROC AUC) Ratio",
+                                                #     "value": "auroc_ratio",
+                                                # },
                                                 {
                                                     "label": "Miscalibration Difference",
                                                     "value": "miscalibration_diff",
@@ -464,7 +464,7 @@ def run_app(
                                     dbc.Col(
                                         [
                                             html.H6(
-                                                "Select significance level for the KS test (Data table rows in bold are significant at the selected level): "
+                                                "Select significance level for the Kolgomorov Smirnoff (KS) test - Data table rows in bold are significant at the selected level: "
                                             ),
                                             dcc.Slider(
                                                 0.01,
@@ -475,7 +475,7 @@ def run_app(
                                             ),
                                             # Add slider for sensitivity of the test
                                             html.H6(
-                                                "Select rounding level for the KS test: "
+                                                "Select rounding (precision) level for SHAP values in the KS test: "
                                             ),
                                             dcc.Slider(
                                                 0,
@@ -485,8 +485,8 @@ def run_app(
                                                 id="feat-sensitivity-slider",
                                             ),
                                             html.H6(
-                                                "Rounding level is the level at which SHAP values should be rounded because they are considered 'distinct'," +
-                                                  " in order to avoid detecting statistically significant but minor differences between distributions in the KS test."
+                                                "Rounding level is the decimal point level at which SHAP values should be rounded because they are considered 'distinct'," +
+                                                  " in order to avoid detecting statistically significant but minor differences between distributions in the KS test. E.g. 1 means rounding to 1 decimal point."
                                             ),
                                         ]
                                     ),
@@ -735,10 +735,13 @@ def run_app(
                 else y_pred_prob[sg_feature]
             )
             sg_y_true = y_true[sg_feature]
+            name = "Random subgroup"
+            if bias:
+                name += f" with bias"
             result_set_df = pd.DataFrame(
                 {
                     "quality": [None],
-                    "description": ["Random subgroup"],
+                    "description": [name],
                     "size": [sum(sg_feature)],
                     "proportion": [sum(sg_feature) / len(sg_feature)],
                     "metric_score": [
@@ -766,14 +769,11 @@ def run_app(
                 qf=get_qf_from_str(metric),
                 # method="between_groups",
                 method="to_overall",
-                min_support_ratio=0.01,
                 depth=1,
                 max_support_ratio=0.9,  # To prevent finding majority subgroups
                 logging_level=logging.INFO,
             )
             result_set_df = result_set.to_dataframe()
-            # result_set_df['metric_score'] = 0.0
-            # result_set_df['metric'] = metric
             metrics = []
             for idx in range(len(result_set_df)):
                 # Add the metric value (e.g. Accuracy for acc_diff)
@@ -1043,7 +1043,6 @@ if __name__ == "__main__":
         help="Model to use for the evaluation. Available options are: 'rf', 'dt', 'xgb'",
     )
     args = parser.parse_args()
-    # bias = args.bias if args.bias in ("random", "mean", "swap", "bin", "binning") else False
     train_split = False if args.train_split in ("False", "false", False, "F") else True
     run_app(
         args.n_samples,

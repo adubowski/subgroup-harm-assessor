@@ -192,6 +192,7 @@ def get_sg_hist(y_df_local, categories=["TN", "FN", "TP", "FP"], title=None):
     Args:
         y_df_local (pd.DataFrame): A dataframe with the true labels and the predictions
     """
+    y_df_local = y_df_local[y_df_local["category"].isin(categories)]
     sg_hist = px.histogram(
         y_df_local,
         x="probability",
@@ -199,6 +200,9 @@ def get_sg_hist(y_df_local, categories=["TN", "FN", "TP", "FP"], title=None):
         hover_data=y_df_local.columns,
         category_orders={"category": categories},
     )
+    # Hide TN and TP by default
+    # sg_hist.for_each_trace(lambda t: t.update(visible="legendonly") if t.name in ["TN", "TP"] else t)
+
     sg_hist.update_xaxes(range=[0, 1])
     sg_hist.update_traces(
         xbins=dict(
@@ -215,7 +219,7 @@ def get_sg_hist(y_df_local, categories=["TN", "FN", "TP", "FP"], title=None):
     sg_hist.layout.xaxis.fixedrange = True
     sg_hist.layout.yaxis.fixedrange = True
     # Update histogram height
-    sg_hist.update_layout(height=600)
+    sg_hist.update_layout(height=550)
     return sg_hist
 
 
@@ -227,7 +231,7 @@ def get_data_table(
     # tpr = true_positive_score(y_true[sg_feature], y_pred[sg_feature]).round(3)
     # fpr = false_positive_score(y_true[sg_feature], y_pred[sg_feature]).round(3)
     auroc = roc_auc_score(y_true[sg_feature], y_pred_prob[sg_feature]).round(3)
-    auprc = average_precision_score(y_true[sg_feature], y_pred[sg_feature]).round(3)
+    # auprc = average_precision_score(y_true[sg_feature], y_pred[sg_feature]).round(3)
     cal_score = miscalibration_score(y_true[sg_feature], y_pred_prob[sg_feature]).round(
         3
     )
@@ -241,6 +245,7 @@ def get_data_table(
         )
     # fp = sum((y_true[sg_feature] == 0) & (y_pred[sg_feature] == 1))
     # fn = sum((y_true[sg_feature] == 1) & (y_pred[sg_feature] == 0))
+        
     # Generate a data table with the subgroup description
     df = pd.DataFrame(
         {
@@ -248,7 +253,7 @@ def get_data_table(
                 "Description",
                 "Size",
                 "AUROC",
-                "AUPRC",
+                # "AUPRC",
                 "Miscalibration score",
                 get_name_from_metric_str(qf_metric),
             ],
@@ -256,7 +261,7 @@ def get_data_table(
                 subgroup_description,
                 sg_feature.sum(),
                 auroc,
-                auprc,
+                # auprc,
                 cal_score,
                 quality_score,
             ],
@@ -354,7 +359,7 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
     # Merge the shap values with the feature values such that we can plot the violin plot of shap values per feature value
     concat_df = pd.concat([shap_df[feature], X[feature]], axis=1)
     concat_df.columns = ["SHAP", feature]
-
+    
     # Create a violin plot for the feature values
     fig = go.Figure()
 
@@ -489,6 +494,11 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
     shap_values_df = shap_values_df.drop(columns="group", errors="ignore")
 
     sg_shap_values_df = shap_values_df[sg_feature]
+
+    # Calculate cohen's d between the two groups for each feature
+    cohen_d = (sg_shap_values_df.mean() - shap_values_df.mean()) / np.sqrt(
+        (shap_values_df.std() ** 2 + sg_shap_values_df.std() ** 2) / 2
+    )
     # Put all shap values of different features in a single column with feature names as a new column
     sg_shap_values_df = sg_shap_values_df.reset_index()
     sg_shap_values_df = sg_shap_values_df.melt(
@@ -526,7 +536,9 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
         yaxis_title="Loss SHAP value - feature contribution to loss",
         xaxis_title="Feature",
     )
-    fig.update_xaxes(categoryorder="category ascending")
+    # Order x axis by cohen's d in reverse order
+    # fig.update_xaxes(categoryorder="array", categoryarray=cohen_d.abs().sort_values(ascending=False).index)
+
     fig.update_traces(boxmean=True)
 
     return fig

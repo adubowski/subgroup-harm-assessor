@@ -30,6 +30,7 @@ def import_dataset(dataset):
     elif dataset in ("credit_g", "german", "german_credit"):
         dataset_id = 31
         target = "good"
+        cols_to_drop = ["personal_status", "other_parties", "residence_since", "foreign_worker"]
     elif dataset == "heloc":
         dataset_id = 45023
         target = "1"
@@ -124,7 +125,7 @@ def add_bias(
 ) -> pd.Series:
     """Add bias to the dataset."""
 
-    if bias == "random":
+    if bias in ("random", "noise"):
         feature = "capital-gain"
         # Add random noise to the subset
         std_val = X_test[feature].std()
