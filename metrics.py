@@ -108,7 +108,7 @@ def get_name_from_metric_str(metric: str) -> str:
     """Get the name of the metric from a string nicely formatted."""
     metric = trim_transform_from_str(metric)
     if metric in ("equalized_odds", "eo"):
-        return "TPR / FPR"
+        return "Equalized Odds"
     # Split words and Capitalize the first letters
     return " ".join(
         [
@@ -136,8 +136,10 @@ def get_quality_metric_from_str(metric: str) -> Callable[[pd.Series, pd.Series],
     if metric in ("equalized_odds", "eo"):
         # Get max of tpr and fpr
         return (
-            lambda y_true, y_pred: str(true_positive_score(y_true, y_pred).round(3))
-            + "; "
+            lambda y_true, y_pred: 
+            "TPR: "
+            + str(true_positive_score(y_true, y_pred).round(3))
+            + "; FPR: "
             + str(false_positive_score(y_true, y_pred).round(3))
         )
     elif metric in ("brier_score", "brier_score_loss"):
@@ -201,7 +203,7 @@ def sort_quality_metrics_df(
         # If max differences are below one, we are talking about difference in ratios, so we should show the results in ascending order
         else:
             # Sort the result_set_df in ascending order based on the metric_score
-            result_set_df = result_set_df.sort_values(by="metric_score", ascending=True)
+            result_set_df = result_set_df.sort_values(by="metric_score", ascending=False)
     else:
         raise ValueError(
             "Metric must be either a difference or a ratio! Provided metric:",

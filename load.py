@@ -179,7 +179,7 @@ def add_bias(
             f"Bias method '{bias}' not supported. Supported methods: random, mean, median, bin, sum_std, swap."
         )
     print(
-        f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Subset impacted size: {sum(subgroup)}."
+        f"Added bias to the dataset by method: {bias}. Feature {feature} was affected. Size of the subset impacted: {sum(subgroup)}."
     )
 
 
