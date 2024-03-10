@@ -95,6 +95,9 @@ def run_app(
     random_subgroup=False,
     train_split=True,
     model="rf",
+    depth=1,
+    min_support=100,
+    min_support_ratio=0.1,
 ):
     """Runs the app with the given qf_metric"""
     use_random_subgroup = (
@@ -769,8 +772,10 @@ def run_app(
                 qf=get_qf_from_str(metric),
                 # method="between_groups",
                 method="to_overall",
-                depth=1,
-                max_support_ratio=0.9,  # To prevent finding majority subgroups
+                depth=depth,
+                min_support=min_support,
+                min_support_ratio=min_support_ratio,
+                max_support_ratio=0.5,  # To prevent finding majority subgroups
                 logging_level=logging.INFO,
             )
             result_set_df = result_set.to_dataframe()
@@ -1009,7 +1014,6 @@ if __name__ == "__main__":
         help="Number of samples to use for the app. Use 0 to load the entire dataset.",
     )
     parser.add_argument(
-        "-d",
         "--dataset",
         type=str,
         default="adult",
@@ -1042,6 +1046,27 @@ if __name__ == "__main__":
         default="rf",
         help="Model to use for the evaluation. Available options are: 'rf', 'dt', 'xgb'",
     )
+    # Add depth and min support ratio
+    parser.add_argument(
+        "-d",
+        "--depth",
+        type=int,
+        default=1,
+        help="Depth of the subgroup discovery algorithm search",
+    )
+    parser.add_argument(
+        "--min_support",
+        type=int,
+        default=100,
+        help="Minimum support (subgroup size) for the subgroup discovery algorithm",
+    )
+    parser.add_argument(
+        "--min_support_ratio",
+        type=float,
+        default=0.1,
+        help="Min support ratio for the subgroup discovery algorithm",
+    )
+
     args = parser.parse_args()
     train_split = False if args.train_split in ("False", "false", False, "F") else True
     run_app(
@@ -1051,4 +1076,7 @@ if __name__ == "__main__":
         args.random_subgroup,
         train_split,
         args.model,
+        args.depth,
+        args.min_support,
+        args.min_support_ratio,
     )
