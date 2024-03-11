@@ -105,7 +105,7 @@ def run_app(
     )  # When evaluating bias, we want to evaluate against a random subgroup
     start = time.time()
     (
-        X_test,
+        X_test_global,
         y_true_global_test,
         y_pred_prob_global,
         shap_logloss_df_global,
@@ -519,9 +519,9 @@ def run_app(
                                                         id="feat-val-feature-dropdown",
                                                         options=[
                                                             {"label": col, "value": col}
-                                                            for col in X_test.columns
+                                                            for col in X_test_global.columns
                                                         ],
-                                                        value=X_test.columns[0],
+                                                        value=X_test_global.columns[0],
                                                         style={
                                                             "align-items": "center",
                                                             "width": "50%",
@@ -569,9 +569,28 @@ def run_app(
                                                         id="data-feature-dropdown",
                                                         options=[
                                                             {"label": col, "value": col}
-                                                            for col in X_test.columns
+                                                            for col in X_test_global.columns
                                                         ],
-                                                        value=X_test.columns[0],
+                                                        value=X_test_global.columns[0],
+                                                        style={
+                                                            "align-items": "center",
+                                                            "text-align": "center",
+                                                            "border-bottom": "3px solid #d3d3d3"
+                                                        },
+                                                    ),
+                                                ]
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    html.H6("Select class of samples to plot:"),
+                                                    dcc.Dropdown(
+                                                        id="data-label-dropdown",
+                                                        options=[
+                                                            {"label": "All", "value": "all"},
+                                                            {"label": "Positive samples only", "value": 1},
+                                                            {"label": "Negative samples only", "value": 0},
+                                                        ],
+                                                        value="all",
                                                         style={
                                                             "align-items": "center",
                                                             "text-align": "center",
@@ -607,54 +626,22 @@ def run_app(
                                                     ),
                                                 ]
                                             ),
-                                            # dbc.Col(
-                                            #     [
-                                            #         html.H6(""),
-
-                                            #     ]
-                                            # )
                                         ]
                                     ),
                                     html.Br(),
                                     dbc.Row(
                                         [
-                                            html.H6(
-                                                "Positive class true distribution and model outputs:"
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Row(
-                                        [
                                             dbc.Col([
                                                 # Add a placeholder for the graph
-                                                dcc.Graph(id="data-pos-class-dist-plot"),
+                                                dcc.Graph(id="data-class-dist-plot"),
                                             ]),
                                             dbc.Col([
                                                 # Add a placeholder for the graph
-                                                dcc.Graph(id="data-pos-pred-dist-plot"),
+                                                dcc.Graph(id="data-pred-dist-plot"),
                                             ]),
                                         ]
                                     ),
-                                    html.Br(),
-                                    dbc.Row(
-                                        [
-                                            html.H6(
-                                                "Negative class true distribution and model outputs:"
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Row(
-                                        [
-                                            dbc.Col([
-                                                # Add a placeholder for the graph
-                                                dcc.Graph(id="data-neg-class-dist-plot"),
-                                            ]),
-                                            dbc.Col([
-                                                # Add a placeholder for the graph
-                                                dcc.Graph(id="data-neg-pred-dist-plot"),
-                                            ]),
-                                        ]
-                                    ),
+                                    
                                     html.H6(
                                         "Select (max) number of bins (numerical features only):"
                                     ),
@@ -761,7 +748,7 @@ def run_app(
             )
         else:
             result_set = get_fairsd_result_set(
-                X_test,
+                X_test_global,
                 y_true_global_test,
                 y_pred,
                 qf=get_qf_from_str(metric),
@@ -778,7 +765,7 @@ def run_app(
             for idx in range(len(result_set_df)):
                 # Add the metric value (e.g. Accuracy for acc_diff)
                 description = result_set.get_description(idx)
-                sg_feature = description.to_boolean_array(X_test)
+                sg_feature = description.to_boolean_array(X_test_global)
                 sg_y_pred = (
                     y_pred[sg_feature]
                     if metric in Y_PRED_METRICS
@@ -798,7 +785,7 @@ def run_app(
                 baseline_hist,
                 get_subgroup_dropdown_options(result_set_df, metric),
                 result_set.to_json(
-                    X_test, metric, result_set_df
+                    X_test_global, metric, result_set_df
                 ),  # Store the result set representation in the data store
             )
 
@@ -827,7 +814,7 @@ def run_app(
         description = data["descriptions"][subgroup]
         sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
         return get_feat_shap_violin_plots(
-            X_test.copy(),
+            X_test_global.copy(),
             shap_logloss_df_global.copy(),
             sg_feature,
             feature,
@@ -862,19 +849,17 @@ def run_app(
     # Get data distributions based on subgroup selection
     @app.callback(
         # Output("data-feature-dist-plot", "figure"),
-        Output("data-pos-class-dist-plot", "figure"),
-        Output("data-pos-pred-dist-plot", "figure"),
-        Output("data-neg-class-dist-plot", "figure"),
-        Output("data-neg-pred-dist-plot", "figure"),
+        Output("data-class-dist-plot", "figure"),
+        Output("data-pred-dist-plot", "figure"),
         Input("data-feature-dropdown", "value"),
         Input("data-agg-dropdown", "value"),
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("data-hist-slider", "value"),
-        # Input("data-label-dropdown", "value"),
         Input("simple-baseline-threshold-slider", "value"),
+        Input("data-label-dropdown", "value"),
     )
-    def get_data_feat_distr(feature, agg, subgroup, data, bins, threshold):
+    def get_data_feat_distr(feature, agg, subgroup, data, bins, threshold, class_label):
         """Produces a bar chart or line plot with the data feature values counts for the selected subgroup"""
         if not feature:
             raise PreventUpdate
@@ -895,10 +880,15 @@ def run_app(
         y_pred_prob = y_pred_prob_global.copy()
         y_pred = (y_pred_prob >= threshold).astype(int)
         y_true = y_true_global_test.copy()
-        class1, pred1, class2, pred2 = get_data_distr_charts(
-            X_test, y_true, y_pred, sg_feature, feature, description, bins, agg
+        X_test = X_test_global.copy()
+        if class_label in (0, 1):
+            y_pred = y_pred[y_true == class_label]
+            X_test = X_test[y_true == class_label]
+
+        class_plot, pred_plot = get_data_distr_charts(
+            X_test, y_pred, sg_feature, feature, description, bins, agg
         )
-        return class1, pred1, class2, pred2
+        return class_plot, pred_plot
             
 
     # Get feat-table-col

@@ -288,69 +288,52 @@ def get_data_table(
 
 
 def get_data_distr_charts(
-    X, y_true, y_pred, sg_feature, feature, description, nbins=20, agg="percentage"
+    X, y_pred, sg_feature, feature, description, nbins=20, agg="percentage"
 ):
     """For positive and negative labels and predictions, returns a figure with the histogram distribution across 
     feature values of the selected feature in the subgroup and the baseline"""
-    true_filter = y_true == 1
-    pred_filter = y_pred == 1
+
     # Get the data distribution for the feature values of the selected feature in the subgroup and the baseline
-    class1 = get_data_distr_chart(
-        X[true_filter], sg_feature, feature, description, nbins, agg
+    class_plot = get_data_distr_chart(
+        X, sg_feature, feature, description, nbins, agg
     )
-    class1.update_layout(
+    class_plot.update_layout(
         title="Data distribution for "
         + feature
         + f" in the subgroup ({description}) and the baseline"
     )
     # Get the predictions distribution for the feature values of the selected feature in the subgroup and the baseline
-    pred1 = get_data_distr_chart(
-        X[pred_filter], sg_feature, feature, description, nbins, agg
+    pred_plot = get_data_distr_chart(
+        y_pred, sg_feature, feature, description, nbins, agg
     )
-    pred1.update_layout(
+    pred_plot.update_layout(
         title="Predictions distribution for "
         + feature
         + f" in the subgroup ({description}) and the baseline"
     )
-    # Align y axis for the two charts
-    # max_y = max(class1.layout.yaxis.range[1], pred1.layout.yaxis.range[1])
-    # class1.update_yaxes(range=[0, max_y])
-    # pred1.update_yaxes(range=[0, max_y])
-
-    class2 = get_data_distr_chart(
-        X[~true_filter], sg_feature, feature, description, nbins, agg
-    )
-    class2.update_layout(
-        title="Data distribution for "
-        + feature
-        + f" in the subgroup ({description}) and the baseline"
-    )
-    pred2 = get_data_distr_chart(
-        X[~pred_filter], sg_feature, feature, description, nbins, agg
-    )
-    pred2.update_layout(
-        title="Predictions distribution for "
-        + feature
-        + f" in the subgroup ({description}) and the baseline"
-    )
-    # Align y axis for the two charts
-    # max_y = max(class2.layout.yaxis.range[1], pred2.layout.yaxis.range[1])
-    # class2.update_yaxes(range=[0, max_y])
-    # pred2.update_yaxes(range=[0, max_y])
-    return class1, pred1, class2, pred2
+    if agg == "percentage":
+        # Update yaxis range to 1
+        class_plot.update_layout(yaxis=dict(range=[0, 100]))
+        pred_plot.update_layout(yaxis=dict(range=[0, 100]))
+    
+    return class_plot, pred_plot
 
 
 def get_data_distr_chart(
     X, sg_feature, feature, description, nbins=20, agg="percentage"
 ):
     """Returns a figure with the data distribution for the feature values of the selected feature in the subgroup and the baseline"""
+
+    if type(X) == pd.DataFrame and feature in X.columns:
+        X = X[feature]
+    else:
+        X = pd.Series(X).astype("str")
     X_sg = X[sg_feature].copy()
     fig = go.Figure()
-
     # Add trace for baseline
     fig.add_trace(
         go.Histogram(
-            x=X[feature],
+            x=X,
             name="Baseline",
             histnorm="percent" if agg == "percentage" else "",
             nbinsx=nbins,
@@ -360,7 +343,7 @@ def get_data_distr_chart(
     # Add trace for subgroup
     fig.add_trace(
         go.Histogram(
-            x=X_sg[feature],
+            x=X_sg,
             name="Subgroup",
             histnorm="percent" if agg == "percentage" else "",
             nbinsx=nbins,
