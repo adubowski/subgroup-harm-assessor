@@ -7,6 +7,7 @@ from sklearn.calibration import calibration_curve
 from sklearn.metrics import (
     auc,
     average_precision_score,
+    log_loss,
     precision_recall_curve,
     roc_auc_score,
     roc_curve,
@@ -224,7 +225,7 @@ def get_sg_hist(y_df_local, categories=["TN", "FN", "TP", "FP"], title=None):
 
 
 def get_data_table(
-    subgroup_description, y_true, y_pred, y_pred_prob, qf_metric, sg_feature
+    subgroup_description, y_true, y_pred, y_pred_prob, qf_metric, sg_feature, n_bins=12
 ):
     """Generates a data table with the subgroup description and the subgroup size"""
 
@@ -232,9 +233,12 @@ def get_data_table(
     # fpr = false_positive_score(y_true[sg_feature], y_pred[sg_feature]).round(3)
     auroc = roc_auc_score(y_true[sg_feature], y_pred_prob[sg_feature]).round(3)
     # auprc = average_precision_score(y_true[sg_feature], y_pred[sg_feature]).round(3)
-    cal_score = miscalibration_score(y_true[sg_feature], y_pred_prob[sg_feature]).round(
-        3
-    )
+    cal_score = miscalibration_score(
+        y_true[sg_feature], y_pred_prob[sg_feature], n_bins=n_bins
+    ).round(3)
+    avg_loss = log_loss(y_true[sg_feature], y_pred_prob[sg_feature]).round(3)
+    brier_score = np.mean((y_true[sg_feature] - y_pred_prob[sg_feature]) ** 2).round(3)
+
     if qf_metric in Y_PRED_METRICS:
         quality_score = get_quality_metric_from_str(qf_metric)(
             y_true[sg_feature], y_pred[sg_feature]
@@ -245,28 +249,32 @@ def get_data_table(
         )
     # fp = sum((y_true[sg_feature] == 0) & (y_pred[sg_feature] == 1))
     # fn = sum((y_true[sg_feature] == 1) & (y_pred[sg_feature] == 0))
-        
+    
     # Generate a data table with the subgroup description
-    df = pd.DataFrame(
-        {
-            "Statistic": [
-                "Description",
-                "Size",
-                "AUROC",
-                # "AUPRC",
-                "Miscalibration score",
-                get_name_from_metric_str(qf_metric),
-            ],
-            "Value": [
-                subgroup_description,
-                sg_feature.sum(),
-                auroc,
-                # auprc,
-                cal_score,
-                quality_score,
-            ],
-        }
-    )
+    table_content = {
+        "Statistic": [
+            "Description",
+            "Size",
+            "AUROC",
+            "Miscalibration score",
+            "Brier score",
+            "Average Log Loss",
+        ],
+        "Value": [
+            subgroup_description,
+            sg_feature.sum(),
+            auroc,
+            cal_score,
+            brier_score,
+            avg_loss,
+        ],
+    }
+    metric_name = get_name_from_metric_str(qf_metric)
+    if metric_name != "Average Log Loss":
+        table_content["Statistic"].append(metric_name)
+        table_content["Value"].append(quality_score)
+
+    df = pd.DataFrame(table_content)
     data_table = dash_table.DataTable(
         style_table={"overflowX": "auto"},
         style_data={"whiteSpace": "normal", "height": "auto"},

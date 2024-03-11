@@ -420,26 +420,13 @@ def run_app(
                                                         4,
                                                         20,
                                                         4,
-                                                        value=8,
+                                                        value=12,
                                                         id="calibration-slider",
                                                     ),
                                                 ]
                                             ),
                                         ]
                                     ),
-                                    # Add whitespace below performance plots
-                                    # dbc.Row([
-                                    #     html.Br(),
-                                    # ]),
-                                    # dbc.Row([
-                                    #     dcc.Graph(
-                                    #         id="calibration_curve",
-                                    #     ),
-                                    #     html.H6("Select (max) number of bins for the calibration plot:"),
-                                    #     dcc.Slider(
-                                    #         5, 30, 5, value=10, id="calibration-slider"
-                                    #     ),
-                                    # ])
                                 ],
                                 style={"align-items": "center"},
                             ),
@@ -728,6 +715,7 @@ def run_app(
             y_pred_prob,
             qf_metric=metric,
             sg_feature=pd.Series([True] * y_true.shape[0]),
+            # We do not update number of bins here to prevent rerunning DSSD. Default number of bins should be enough for the baseline generally
         )
         baseline_conf_mat = CMchart(
             "Confusion Matrix", y_true, (y_pred_prob >= threshold).astype(int)
@@ -950,13 +938,17 @@ def run_app(
         Input("result-set-dict", "data"),
         Input("subgroup-dropdown", "value"),
         Input("simple-baseline-threshold-slider", "value"),
+        Input("calibration-slider", "value"),
     )
-    def get_subgroup_stats(data, subgroup, threshold):
+    def get_subgroup_stats(data, subgroup, threshold, nbins):
         """Returns the group description and updates the charts of the selected subgroup"""
         if subgroup is None:
             raise PreventUpdate
         if len(data["descriptions"]) == 0:
             print("Error: No subgroups found. This should not happen.")
+            raise PreventUpdate
+        if not nbins:
+            print("Error: No bins selected. This should not happen.")
             raise PreventUpdate
 
         sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
@@ -991,6 +983,7 @@ def run_app(
             y_pred_prob,
             qf_metric=metric,
             sg_feature=sg_feature,
+            n_bins=nbins,
         )
 
         roc_fig = plot_roc_curves(
