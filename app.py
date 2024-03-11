@@ -588,6 +588,7 @@ def run_app(
                                                         style={
                                                             "align-items": "center",
                                                             "text-align": "center",
+                                                            "border-bottom": "3px solid #d3d3d3"
                                                         },
                                                     ),
                                                 ]
@@ -614,58 +615,64 @@ def run_app(
                                                         style={
                                                             "align-items": "center",
                                                             "text-align": "center",
+                                                            "border-bottom": "3px solid #d3d3d3"
                                                         },
                                                     ),
                                                 ]
                                             ),
-                                            dbc.Col(
-                                                [
-                                                    # Add dropdown to select observed or predicted class
-                                                    html.H6("Select whether to show the distribution of predicted or observed classes."),
-                                                    dcc.Dropdown(
-                                                        id="data-label-dropdown",
-                                                            options=[
-                                                                {
-                                                                    "label": "Predictions",
-                                                                    "value": "predictions",
-                                                                },
-                                                                {
-                                                                    "label": "Observed",
-                                                                    "value": "observed",
-                                                                },
-                                                            ],
-                                                            value="predictions",
-                                                            style={
-                                                                "align-items": "center",
-                                                                "text-align": "center",
-                                                            },
-                                                    ),
-                                                ]
-                                            )
+                                            # dbc.Col(
+                                            #     [
+                                            #         html.H6(""),
+
+                                            #     ]
+                                            # )
                                         ]
                                     ),
                                     html.Br(),
-                                    # dbc.Row([
-                                    #     # Add a placeholder for the graph
-                                    #     dcc.Graph(id="data-feature-dist-plot"),
-                                    # ]),
                                     dbc.Row(
                                         [
-                                            # Add a placeholder for the graph
-                                            dcc.Graph(id="data-pos-class-dist-plot"),
+                                            html.H6(
+                                                "Positive class true distribution and model outputs:"
+                                            ),
                                         ]
                                     ),
                                     dbc.Row(
                                         [
-                                            # Add a placeholder for the graph
-                                            dcc.Graph(id="data-neg-class-dist-plot"),
+                                            dbc.Col([
+                                                # Add a placeholder for the graph
+                                                dcc.Graph(id="data-pos-class-dist-plot"),
+                                            ]),
+                                            dbc.Col([
+                                                # Add a placeholder for the graph
+                                                dcc.Graph(id="data-pos-pred-dist-plot"),
+                                            ]),
+                                        ]
+                                    ),
+                                    html.Br(),
+                                    dbc.Row(
+                                        [
+                                            html.H6(
+                                                "Negative class true distribution and model outputs:"
+                                            ),
+                                        ]
+                                    ),
+                                    dbc.Row(
+                                        [
+                                            dbc.Col([
+                                                # Add a placeholder for the graph
+                                                dcc.Graph(id="data-neg-class-dist-plot"),
+                                            ]),
+                                            dbc.Col([
+                                                # Add a placeholder for the graph
+                                                dcc.Graph(id="data-neg-pred-dist-plot"),
+                                            ]),
                                         ]
                                     ),
                                     html.H6(
                                         "Select (max) number of bins (numerical features only):"
                                     ),
                                     dcc.Slider(
-                                        5, 30, 5, value=20, id="data-hist-slider"
+                                        5, 30, 5, value=10, id="data-hist-slider"
                                     ),
                                 ],
                                 style={"align-items": "center"},
@@ -868,16 +875,18 @@ def run_app(
     @app.callback(
         # Output("data-feature-dist-plot", "figure"),
         Output("data-pos-class-dist-plot", "figure"),
+        Output("data-pos-pred-dist-plot", "figure"),
         Output("data-neg-class-dist-plot", "figure"),
+        Output("data-neg-pred-dist-plot", "figure"),
         Input("data-feature-dropdown", "value"),
         Input("data-agg-dropdown", "value"),
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("data-hist-slider", "value"),
-        Input("data-label-dropdown", "value"),
+        # Input("data-label-dropdown", "value"),
         Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_data_feat_distr(feature, agg, subgroup, data, bins, label, threshold):
+    def get_data_feat_distr(feature, agg, subgroup, data, bins, threshold):
         """Produces a bar chart or line plot with the data feature values counts for the selected subgroup"""
         if not feature:
             raise PreventUpdate
@@ -888,9 +897,6 @@ def run_app(
         if not bins:
             logging.error("Error: No bins selected. This should not happen.")
             raise PreventUpdate
-        if not label:
-            logging.error("Error: No label selected for data charts. This should not happen.")
-            raise PreventUpdate
         try:
             description = data["descriptions"][subgroup]
             sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
@@ -898,14 +904,14 @@ def run_app(
             print("Subgroup not found. This should not happen.")
             raise PreventUpdate
 
-        if label == "predictions":
-            y_pred_prob = y_pred_prob_global.copy()
-            y_true = (y_pred_prob >= threshold).astype(int)
-        else:
-            y_true = y_true_global_test.copy()
-        return get_data_distr_charts(
-            X_test, y_true, sg_feature, feature, description, bins, agg
+        y_pred_prob = y_pred_prob_global.copy()
+        y_pred = (y_pred_prob >= threshold).astype(int)
+        y_true = y_true_global_test.copy()
+        class1, pred1, class2, pred2 = get_data_distr_charts(
+            X_test, y_true, y_pred, sg_feature, feature, description, bins, agg
         )
+        return class1, pred1, class2, pred2
+            
 
     # Get feat-table-col
     @app.callback(

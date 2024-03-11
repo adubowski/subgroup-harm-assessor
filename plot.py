@@ -280,27 +280,56 @@ def get_data_table(
 
 
 def get_data_distr_charts(
-    X, y_true, sg_feature, feature, description, nbins=20, agg="percentage"
+    X, y_true, y_pred, sg_feature, feature, description, nbins=20, agg="percentage"
 ):
-    """For positive and negative predictions, returns a figure with the data distribution for the feature values of the selected feature in the subgroup and the baseline"""
-    pos_filter = y_true == 1
-    chart1 = get_data_distr_chart(
-        X[pos_filter], sg_feature, feature, description, nbins, agg
+    """For positive and negative labels and predictions, returns a figure with the histogram distribution across 
+    feature values of the selected feature in the subgroup and the baseline"""
+    true_filter = y_true == 1
+    pred_filter = y_pred == 1
+    # Get the data distribution for the feature values of the selected feature in the subgroup and the baseline
+    class1 = get_data_distr_chart(
+        X[true_filter], sg_feature, feature, description, nbins, agg
     )
-    chart1.update_layout(
-        title="Positive class: Data distribution for "
+    class1.update_layout(
+        title="Data distribution for "
         + feature
-        + f" in the subgroup ({description}) and the baseline for positive class"
+        + f" in the subgroup ({description}) and the baseline"
     )
-    chart2 = get_data_distr_chart(
-        X[~pos_filter], sg_feature, feature, description, nbins, agg
+    # Get the predictions distribution for the feature values of the selected feature in the subgroup and the baseline
+    pred1 = get_data_distr_chart(
+        X[pred_filter], sg_feature, feature, description, nbins, agg
     )
-    chart2.update_layout(
-        title="Negative class: Data distribution for "
+    pred1.update_layout(
+        title="Predictions distribution for "
         + feature
-        + f" in the subgroup ({description}) and the baseline for negative class"
+        + f" in the subgroup ({description}) and the baseline"
     )
-    return chart1, chart2
+    # Align y axis for the two charts
+    # max_y = max(class1.layout.yaxis.range[1], pred1.layout.yaxis.range[1])
+    # class1.update_yaxes(range=[0, max_y])
+    # pred1.update_yaxes(range=[0, max_y])
+
+    class2 = get_data_distr_chart(
+        X[~true_filter], sg_feature, feature, description, nbins, agg
+    )
+    class2.update_layout(
+        title="Data distribution for "
+        + feature
+        + f" in the subgroup ({description}) and the baseline"
+    )
+    pred2 = get_data_distr_chart(
+        X[~pred_filter], sg_feature, feature, description, nbins, agg
+    )
+    pred2.update_layout(
+        title="Predictions distribution for "
+        + feature
+        + f" in the subgroup ({description}) and the baseline"
+    )
+    # Align y axis for the two charts
+    # max_y = max(class2.layout.yaxis.range[1], pred2.layout.yaxis.range[1])
+    # class2.update_yaxes(range=[0, max_y])
+    # pred2.update_yaxes(range=[0, max_y])
+    return class1, pred1, class2, pred2
 
 
 def get_data_distr_chart(
@@ -338,6 +367,14 @@ def get_data_distr_chart(
         xaxis_title=feature,
         yaxis_title=agg.capitalize() + " of data in respective group",
     )
+    # Update yaxis range to max value
+    # max_y = max(
+    #     max(fig.data[0].y), # FIXME: How to get the max value of the histogram object?
+    #     max(fig.data[1].y)
+    # )
+    # print(max_y)
+    # print(fig.data)
+    # fig.update_layout(yaxis=dict(range=[0, max_y]))
 
     return fig
 
