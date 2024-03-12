@@ -214,6 +214,8 @@ def run_app(
                                                 },
                                             ],
                                             value="average_log_loss_diff",
+                                            # Disable clearing
+                                            clearable=False,
                                         )
                                     ),
                                 ]
@@ -246,6 +248,8 @@ def run_app(
                                                 "align-items": "left",
                                                 "height": "fit-content",
                                             },
+                                            # Disable clearing
+                                            clearable=False,
                                         ),
                                         width=9,
                                         style={
@@ -527,6 +531,8 @@ def run_app(
                                                             "width": "50%",
                                                             "text-align": "center",
                                                         },
+                                                        # Disable clearing
+                                                        clearable=False,
                                                     ),
                                                 ]
                                             ),
@@ -577,6 +583,8 @@ def run_app(
                                                             "text-align": "center",
                                                             "border-bottom": "3px solid #d3d3d3"
                                                         },
+                                                        # Disable clearing
+                                                        clearable=False,
                                                     ),
                                                 ]
                                             ),
@@ -596,6 +604,8 @@ def run_app(
                                                             "text-align": "center",
                                                             "border-bottom": "3px solid #d3d3d3"
                                                         },
+                                                        # Disable clearing
+                                                        clearable=False,
                                                     ),
                                                 ]
                                             ),
@@ -623,6 +633,8 @@ def run_app(
                                                             "text-align": "center",
                                                             "border-bottom": "3px solid #d3d3d3"
                                                         },
+                                                        # Disable clearing
+                                                        clearable=False,
                                                     ),
                                                 ]
                                             ),
