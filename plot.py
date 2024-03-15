@@ -329,6 +329,7 @@ def get_data_distr_chart(
     else:
         X = pd.Series(X).astype("str")
     X_sg = X[sg_feature].copy()
+
     fig = go.Figure()
     # Add trace for baseline
     fig.add_trace(
@@ -363,10 +364,37 @@ def get_data_distr_chart(
     #     max(fig.data[0].y), # FIXME: How to get the max value of the histogram object?
     #     max(fig.data[1].y)
     # )
-    # print(max_y)
-    # print(fig.data)
     # fig.update_layout(yaxis=dict(range=[0, max_y]))
 
+    return fig
+
+
+def get_feat_shap_violin_plot(shap_values_df, sg_feature=None):
+    """Returns a violin plot for the features SHAP values in the subgroup and the baseline"""
+    shap_values_df = transform_box_data(shap_values_df, sg_feature)
+
+    # Create the fig and add hoverdata of confidence intervals
+    fig = px.violin(
+        shap_values_df,
+        x="feature",
+        y="shap_value",
+        color="group",
+        points="all",
+        title="Feature contributions to model loss for subgroup and baseline. <br> "
+        + "The lower the value, the higher its informativeness.",
+        hover_data=shap_values_df.columns,
+        height=600,
+    )
+ 
+ 
+    # Update layout
+    fig.update_layout(
+        yaxis_title="SHAP log loss value",
+        xaxis_title="Feature",
+        violinmode="group",
+    )
+    # Update height
+    fig.update_layout(height=600)
     return fig
 
 
@@ -443,55 +471,85 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
     return fig
 
 
-def get_feat_bar(shap_values_df, sg_feature) -> go.Figure:
+def get_feat_bar(shap_values_df, sg_feature, agg, error_bars=False) -> go.Figure:
     """Returns a figure with the feature contributions to the model loss
 
     Args:
         shap_values_df (pd.DataFrame): The shap values dataframe
         sg_feature (pd.Series): The subgroup feature
-        title (str): The title of the figure
+        agg (str): The aggregation method (mean, median, sum)
+        error_bars (bool): Whether to add error bars to the plot
     Returns:
         go.Figure: The figure with the feature contributions to the model loss
     """
 
     sg_shap_values_df = shap_values_df[sg_feature]
-    sg_shap_values_mean = sg_shap_values_df.mean(numeric_only=True)
-    # Get the mean absolute shap value for each feature
-    shap_values_df_mean = shap_values_df.mean(numeric_only=True)
+    if agg == "mean":
+        # Get the mean absolute shap value for each feature
+        shap_values_df_agg = shap_values_df.mean(numeric_only=True)
+        sg_shap_values_agg = sg_shap_values_df.mean(numeric_only=True)
+    elif agg == "median":
+        # Get the median absolute shap value for each feature
+        shap_values_df_agg = shap_values_df.median(numeric_only=True)
+        sg_shap_values_agg = sg_shap_values_df.median(numeric_only=True)
+    elif agg == "sum":
+        # Get the sum of absolute shap value for each feature
+        shap_values_df_agg = shap_values_df.sum(numeric_only=True)
+        sg_shap_values_agg = sg_shap_values_df.sum(numeric_only=True)
+    
     # Combine the two dataframes
-    shap_values_df_mean = pd.concat([shap_values_df_mean, sg_shap_values_mean], axis=1)
-    shap_values_df_mean.columns = ["Baseline", "Subgroup"]
+    shap_values_df_agg = pd.concat([shap_values_df_agg, sg_shap_values_agg], axis=1)
+    shap_values_df_agg.columns = ["Baseline", "Subgroup"]
 
     # Create the fig and add hoverdata of confidence intervals
     fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            x=shap_values_df_mean.index,
-            y=shap_values_df_mean["Baseline"],
-            name="Baseline",
-            customdata=shap_values_df.std(axis=0, numeric_only=True),
-            hovertemplate="Feature: %{x}<br>Baseline: %{y}<br>Standard deviation: %{customdata}",
-            error_y=dict(
-                type="data",
-                array=shap_values_df.std(axis=0, numeric_only=True),
-                visible=True,
-            ),
+    ytitle = agg.capitalize() + " SHAP log loss value - feature contribution to loss"
+
+    if error_bars:
+        ytitle += " <br> With standard deviation error bars"
+        fig.add_trace(
+            go.Bar(
+                x=shap_values_df_agg.index,
+                y=shap_values_df_agg["Baseline"],
+                name="Baseline",
+                customdata=shap_values_df.std(axis=0, numeric_only=True),
+                hovertemplate="Feature: %{x}<br>Baseline: %{y}<br>Standard deviation: %{customdata}",
+                error_y=dict(
+                    type="data",
+                    array=shap_values_df.std(axis=0, numeric_only=True),
+                    visible=True,
+                ),
+            )
         )
-    )
-    fig.add_trace(
-        go.Bar(
-            x=shap_values_df_mean.index,
-            y=shap_values_df_mean["Subgroup"],
-            name="Subgroup",
-            customdata=sg_shap_values_df.std(axis=0, numeric_only=True),
-            hovertemplate="Feature: %{x}<br>Subgroup: %{y}<br>Standard deviation: %{customdata}",
-            error_y=dict(
-                type="data",
-                array=sg_shap_values_df.std(axis=0, numeric_only=True),
-                visible=True,
-            ),
+        fig.add_trace(
+            go.Bar(
+                x=shap_values_df_agg.index,
+                y=shap_values_df_agg["Subgroup"],
+                name="Subgroup",
+                customdata=sg_shap_values_df.std(axis=0, numeric_only=True),
+                hovertemplate="Feature: %{x}<br>Subgroup: %{y}<br>Standard deviation: %{customdata}",
+                error_y=dict(
+                    type="data",
+                    array=sg_shap_values_df.std(axis=0, numeric_only=True),
+                    visible=True,
+                ),
+            )
         )
-    )
+    else:
+        fig.add_trace(
+            go.Bar(
+                x=shap_values_df_agg.index,
+                y=shap_values_df_agg["Baseline"],
+                name="Baseline",
+            )
+        )
+        fig.add_trace(
+            go.Bar(
+                x=shap_values_df_agg.index,
+                y=shap_values_df_agg["Subgroup"],
+                name="Subgroup",
+            )
+        )
 
     # Update the fig
     fig.update_layout(
@@ -499,17 +557,21 @@ def get_feat_bar(shap_values_df, sg_feature) -> go.Figure:
         yaxis_tickangle=-45,
         title="Feature contributions to model loss for subgroup and baseline. <br> "
         + "The lower the value, the higher its informativeness.",
-        yaxis_title="Mean SHAP log loss value - feature contribution to loss <br> With standard deviation error bars",
+        yaxis_title=ytitle,
         xaxis_title="Feature",
         height=600,
     )
-    fig.update_xaxes(categoryorder="category ascending")
-    # Turn y labels 45 degrees
+    # Order x axis by the absolute value of the difference between the subgroup and the baseline
+    fig.update_xaxes(
+        categoryorder="array",
+        categoryarray=shap_values_df_agg.abs().diff(axis=1).sort_values(by="Subgroup").index,
+    )
+    # Turn y labels
     fig.update_layout(xaxis_tickangle=-25)
     return fig
 
 
-def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
+def get_feat_box(shap_values_df, sg_feature=None) -> go.Figure:
     """Returns a figure with the feature contributions to the model loss
 
     Args:
@@ -519,32 +581,7 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
     Returns:
         go.Figure: The figure with the feature contributions to the model loss
     """
-    shap_values_df = shap_values_df.drop(columns="group", errors="ignore")
-
-    sg_shap_values_df = shap_values_df[sg_feature]
-
-    # Calculate cohen's d between the two groups for each feature
-    cohen_d = (sg_shap_values_df.mean() - shap_values_df.mean()) / np.sqrt(
-        (shap_values_df.std() ** 2 + sg_shap_values_df.std() ** 2) / 2
-    )
-    # Put all shap values of different features in a single column with feature names as a new column
-    sg_shap_values_df = sg_shap_values_df.reset_index()
-    sg_shap_values_df = sg_shap_values_df.melt(
-        id_vars="index", var_name="feature", value_name="shap_value"
-    )
-    sg_shap_values_df["group"] = "Subgroup"
-
-    # Put all shap values of different features in a single column with feature names as a new column
-    shap_values_df = shap_values_df.reset_index()
-    shap_values_df = shap_values_df.melt(
-        id_vars="index", var_name="feature", value_name="shap_value"
-    )
-    shap_values_df["group"] = "Baseline"
-
-    # Combine the two dataframes
-    shap_values_df = pd.concat([shap_values_df, sg_shap_values_df], axis=0)
-    # Drop column index
-    shap_values_df = shap_values_df.drop(columns="index")
+    shap_values_df = transform_box_data(shap_values_df, sg_feature)
 
     # Create the fig and add hoverdata of confidence intervals
     fig = px.box(
@@ -564,12 +601,38 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
         yaxis_title="SHAP log loss value - feature contribution to loss",
         xaxis_title="Feature",
     )
-    # Order x axis by cohen's d in reverse order
-    # fig.update_xaxes(categoryorder="array", categoryarray=cohen_d.abs().sort_values(ascending=False).index)
-
     fig.update_traces(boxmean=True)
 
     return fig
+
+
+def transform_box_data(shap_values_df, sg_feature):
+    """Transforms the shap values dataframe to be suitable for a box plot"""
+    shap_values_df = shap_values_df.drop(columns="group", errors="ignore")
+
+    if sg_feature is not None:
+        sg_shap_values_df = shap_values_df[sg_feature]
+
+        # Put all shap values of different features in a single column with feature names as a new column
+        sg_shap_values_df = sg_shap_values_df.reset_index()
+        sg_shap_values_df = sg_shap_values_df.melt(
+            id_vars="index", var_name="feature", value_name="shap_value"
+        )
+        sg_shap_values_df["group"] = "Subgroup"
+
+    # Put all shap values of different features in a single column with feature names as a new column
+    shap_values_df = shap_values_df.reset_index()
+    shap_values_df = shap_values_df.melt(
+        id_vars="index", var_name="feature", value_name="shap_value"
+    )
+    shap_values_df["group"] = "Baseline"
+
+    if sg_feature is not None:
+        # Combine the two dataframes
+        shap_values_df = pd.concat([shap_values_df, sg_shap_values_df], axis=0)
+    # Drop column index
+    shap_values_df = shap_values_df.drop(columns="index")
+    return shap_values_df
 
 
 def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):

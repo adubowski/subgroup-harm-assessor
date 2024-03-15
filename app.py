@@ -30,7 +30,9 @@ from dash_app.views.menu import get_subgroup_dropdown_options
 from plot import (
     get_data_distr_charts,
     get_data_table,
+    get_feat_bar,
     get_feat_box,
+    get_feat_shap_violin_plot,
     get_feat_shap_violin_plots,
     get_feat_table,
     get_sg_hist,
@@ -484,6 +486,46 @@ def run_app(
                                                 "Rounding level is the decimal point level at which SHAP values should be rounded because they are considered 'distinct'," +
                                                   " in order to avoid detecting statistically significant but minor differences between distributions in the KS test. E.g. 1 means rounding to 1 decimal point."
                                             ),
+                                            dbc.Row([
+                                                dbc.Col([
+                                                    html.H6("Select aggregation method for feature contributions:"),
+                                                ]),
+                                                dbc.Col([
+                                                    dcc.Dropdown(
+                                                        id="feat-agg-dropdown",
+                                                        options=[
+                                                            {
+                                                                "label": "Mean",
+                                                                "value": "mean",
+                                                            },
+                                                            {
+                                                                "label": "Median",
+                                                                "value": "median",
+                                                            },
+                                                            {
+                                                                "label": "Sum",
+                                                                "value": "sum",
+                                                            },
+                                                            {
+                                                                "label": "Statistical summary (box plot)",
+                                                                "value": "box",
+                                                            },
+                                                            {
+                                                                "label": "Distribution details (violin plot)",
+                                                                "value": "violin",
+                                                            }
+                                                        ],
+                                                        value="mean",
+                                                        style={
+                                                            "align-items": "center",
+                                                            "text-align": "center",
+                                                        },
+                                                        # Disable clearing
+                                                        clearable=False,
+                                                    ),
+                                                ]),
+                                            ])
+                                            
                                         ]
                                     ),
                                     html.Br(),
@@ -545,7 +587,7 @@ def run_app(
                                     dbc.Row(
                                         [
                                             # Add a placeholder for the graph
-                                            dcc.Graph(id="feat-val-bar"),
+                                            dcc.Graph(id="feat-val-violin-plot"),
                                         ]
                                     ),
                                     html.Br(),
@@ -708,7 +750,6 @@ def run_app(
 
         baseline_descr = "Full dataset baseline"
 
-        # baseline_imp_bar = get_shap_barchart(shap_values_df, baseline_sg, "Mean contribution to model loss for the baseline (lower is better, features with non-negative importance are not helping the prediction)")
         baseline_data_table = get_data_table(
             baseline_descr,
             y_true,
@@ -806,14 +847,14 @@ def run_app(
 
     # Get feature value plot based on subgroup and feature selection
     @app.callback(
-        Output("feat-val-bar", "figure"),
+        Output("feat-val-violin-plot", "figure"),
         Input("feat-val-feature-dropdown", "value"),
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("feat-val-hist-slider", "value"),
     )
-    def get_feat_val_bar(feature, subgroup, data, nbins):
-        """Produces a bar chart or line plot with the feature value contributions for the selected subgroup"""
+    def get_feat_val_violin_plot(feature, subgroup, data, nbins):
+        """Produces a violin chart or line plot with the feature value contributions for the selected subgroup"""
         if not feature:
             raise PreventUpdate
         if subgroup is None:
@@ -944,10 +985,12 @@ def run_app(
         Input("subgroup-dropdown", "value"),
         Input("simple-baseline-threshold-slider", "value"),
         Input("calibration-slider", "value"),
+        Input("feat-agg-dropdown", "value"),
     )
-    def get_subgroup_stats(data, subgroup, threshold, nbins):
+    def get_subgroup_stats(data, subgroup, threshold, nbins, agg):
         """Returns the group description and updates the charts of the selected subgroup"""
         if subgroup is None:
+            # TODO: Return charts without subgroup
             raise PreventUpdate
         if len(data["descriptions"]) == 0:
             print("Error: No subgroups found. This should not happen.")
@@ -1000,10 +1043,18 @@ def run_app(
             "Confusion Matrix", y_true_global_test[sg_feature], y_pred[sg_feature]
         ).fig
 
-        # Get a bar chart with the feature importances for sg and baseline
-        feat_box = get_feat_box(shap_values_df, sg_feature=sg_feature)
+        if agg == "box":
+            # Get a box plot with the feature importances for sg and baseline
+            feat_plot = get_feat_box(shap_values_df, sg_feature=sg_feature)
+        elif agg == "violin":
+            # Get a violin chart with the feature importances for sg and baseline
+            feat_plot = get_feat_shap_violin_plot(
+                shap_values_df, sg_feature=sg_feature
+            )
+        else:
+            feat_plot = get_feat_bar(shap_values_df, sg_feature=sg_feature, agg=agg)
 
-        return (sg_data_table, sg_conf_mat, sg_hist, roc_fig, feat_box)
+        return (sg_data_table, sg_conf_mat, sg_hist, roc_fig, feat_plot)
 
     print("App startup time (s): ", time.time() - start)
     app.run_server(debug=False)
