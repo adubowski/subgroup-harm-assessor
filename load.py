@@ -53,13 +53,14 @@ def import_dataset(dataset: str, sensitive_features: List[str] = None):
 
     d = fetch_openml(data_id=dataset_id, as_frame=True, parser="auto")
     X = d.data
-    incorrect_sensitive_features = [
-        col for col in sensitive_features if col not in X.columns
-    ]
-    if incorrect_sensitive_features:
-        raise ValueError(
-            f"Sensitive features {incorrect_sensitive_features} not found in the dataset."
-        )
+    if sensitive_features is not None:
+        incorrect_sensitive_features = [
+            col for col in sensitive_features if col not in X.columns
+        ]
+        if incorrect_sensitive_features:
+            raise ValueError(
+                f"Sensitive features {incorrect_sensitive_features} not found in the dataset."
+            )
 
     X = X.drop(cols_to_drop, axis=1, errors="ignore")
 
@@ -217,7 +218,7 @@ def get_classifier(
     # Training the classifier
     if model == "rf":
         classifier = RandomForestClassifier(
-            n_estimators=200, max_depth=20, random_state=0
+            n_estimators=20, max_depth=8, random_state=0
         )
     # TODO: Add XGBoost
     else:
