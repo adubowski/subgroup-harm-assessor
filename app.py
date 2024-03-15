@@ -100,8 +100,8 @@ def run_app(
     depth=1,
     min_support=100,
     min_support_ratio=0.1,
-    sensitive_features=None,
     min_quality=0.01,
+    sensitive_features=None,
 ):
     """Runs the app with the given qf_metric"""
     use_random_subgroup = (
@@ -1125,13 +1125,13 @@ if __name__ == "__main__":
         help="Min support ratio for the subgroup discovery algorithm",
     )
     parser.add_argument(
-        "--min-quality",    
+        "--min_quality",    
         type=float,
         default=0.01,
         help="Minimum quality for the subgroup discovery algorithm",
     )
     parser.add_argument(
-        "--sensitive-features",
+        "--sensitive_features",
         type=str,
         nargs="+",
         help="Comma-separated list of sensitive features to use for the subgroup discovery algorithm",
@@ -1149,6 +1149,6 @@ if __name__ == "__main__":
         args.depth,
         args.min_support,
         args.min_support_ratio,
-        args.sensitive_features,
         args.min_quality,
+        args.sensitive_features,
     )
