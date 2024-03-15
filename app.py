@@ -1004,7 +1004,7 @@ def run_app(
         sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
         description = data["descriptions"][subgroup]
         subgroup_description = str(description).replace(" ", "")
-        subgroup_description = subgroup_description.replace("AND", " AND <br>")
+        subgroup_description = subgroup_description.replace("AND", " AND ")
         metric = data["metric"]
 
         y_true = y_true_global_test.copy()
