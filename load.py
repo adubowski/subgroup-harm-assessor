@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import List
 
 from sklearn.ensemble import RandomForestClassifier
 import shap
@@ -17,8 +18,12 @@ from fairsd import fairsd
 from fairsd.fairsd.algorithms import ResultSet
 
 
-def import_dataset(dataset):
-    """Import the dataset from OpenML and preprocess it."""
+def import_dataset(dataset: str, sensitive_features: List[str] = None):
+    """Import the dataset from OpenML and preprocess it.
+    Args:
+        dataset (str): Dataset to be imported. Supported datasets: adult, german_credit, heloc, credit.
+        sensitive_features (list, optional): Sensitive features to be used in the dataset. Defaults to None.
+    """
 
     print("Loading data...")
     cols_to_drop = []
@@ -27,10 +32,14 @@ def import_dataset(dataset):
         dataset_id = 1590
         target = ">50K"
         cols_to_drop = ["fnlwgt", "education-num", "sex", "race", "native-country"]
+        if sensitive_features is not None:
+            cols_to_drop = [col for col in cols_to_drop if col not in sensitive_features]
     elif dataset in ("credit_g", "german", "german_credit"):
         dataset_id = 31
         target = "good"
         cols_to_drop = ["personal_status", "other_parties", "residence_since", "foreign_worker"]
+        if sensitive_features is not None:
+            cols_to_drop = [col for col in cols_to_drop if col not in sensitive_features]
     elif dataset == "heloc":
         dataset_id = 45023
         target = "1"
@@ -44,6 +53,13 @@ def import_dataset(dataset):
 
     d = fetch_openml(data_id=dataset_id, as_frame=True, parser="auto")
     X = d.data
+    incorrect_sensitive_features = [
+        col for col in sensitive_features if col not in X.columns
+    ]
+    if incorrect_sensitive_features:
+        raise ValueError(
+            f"Sensitive features {incorrect_sensitive_features} not found in the dataset."
+        )
 
     X = X.drop(cols_to_drop, axis=1, errors="ignore")
 
@@ -65,15 +81,16 @@ def load_data(
     dataset="adult",
     n_samples=0,
     train_split=True,
+    sensitive_features: List[str] = None,
 ):
     """Load data from UCI Adult dataset.
     Args:
         dataset (str): Dataset to be loaded, currently only Adult and German Credit datasets are supported
         n_samples (int, optional): Number of samples to load. Select 0 to load all.
-        cols_to_drop (list, optional): Columns to drop from dataset. Defaults to ["fnlwgt", "education-num"].
         train_split (bool, optional): Flag whether to split the number of selected data samples into train and test
+        sensitive_features (list, optional): Sensitive features to be used in the dataset. Defaults to None.
     """
-    X, y_true = import_dataset(dataset)
+    X, y_true = import_dataset(dataset, sensitive_features)
 
     # Get categorical feature names
     cat_features = X.select_dtypes(include=["category"]).columns
@@ -200,7 +217,7 @@ def get_classifier(
     # Training the classifier
     if model == "rf":
         classifier = RandomForestClassifier(
-            n_estimators=20, max_depth=8, random_state=0
+            n_estimators=200, max_depth=20, random_state=0
         )
     # TODO: Add XGBoost
     else:
@@ -278,6 +295,7 @@ def get_fairsd_result_set(
     depth=1,
     min_support=100,
     result_set_size=20,
+    sensitive_features=None,
     **kwargs,
 ) -> ResultSet:
     """Get result set from fairsd DSSD task
@@ -293,6 +311,8 @@ def get_fairsd_result_set(
         kwargs: Additional arguments to pass to fairsd.SubgroupDiscoveryTask,
             including result_set_ratio and logging_level (as defined by logging module)
     """
+    if sensitive_features is not None:
+        X = X[sensitive_features].copy()
     task = fairsd.SubgroupDiscoveryTask(
         X,
         y_true,

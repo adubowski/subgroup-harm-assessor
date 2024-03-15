@@ -18,7 +18,7 @@ from metrics import (
     get_name_from_metric_str,
     miscalibration_score,
 )
-from scipy.stats import ks_2samp, wasserstein_distance
+from scipy.stats import ks_2samp #, wasserstein_distance
 
 COLS_TO_SHOW = [
     "quality",
@@ -427,9 +427,9 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
         title="Feature distribution for "
         + feature
         + f" in the subgroup ({description}) and the baseline <br>"
-        + "The lower the value, the higher its contribution to model's discriminative and calibration power",
+        + "The lower the feature's values, the higher its informativeness",
         xaxis_title=f"Feature values of {feature} <br> Feature type: {feature_type}; {slider_note}",
-        yaxis_title="Loss SHAP value",
+        yaxis_title="SHAP log loss value",
         violinmode="group",
         # yaxis=dict(range=[-0.4, 0.4])
     )
@@ -498,8 +498,8 @@ def get_feat_bar(shap_values_df, sg_feature) -> go.Figure:
         barmode="group",
         yaxis_tickangle=-45,
         title="Feature contributions to model loss for subgroup and baseline. <br> "
-        + "The lower the value, the higher its contribution to model's discriminative and calibration power.",
-        yaxis_title="Mean Loss SHAP value - feature contribution to loss <br> With standard deviation error bars",
+        + "The lower the value, the higher its informativeness.",
+        yaxis_title="Mean SHAP log loss value - feature contribution to loss <br> With standard deviation error bars",
         xaxis_title="Feature",
         height=600,
     )
@@ -554,14 +554,14 @@ def get_feat_box(shap_values_df, sg_feature) -> go.Figure:
         color="group",
         points=False,
         title="Feature contributions to model loss for subgroup and baseline. <br> "
-        + "The lower the value, the higher its contribution to model's discriminative and calibration power.",
+        + "The lower the value, the higher its informativeness.",
         hover_data=shap_values_df.columns,
         height=600,
     )
 
     # Update the fig
     fig.update_layout(
-        yaxis_title="Loss SHAP value - feature contribution to loss",
+        yaxis_title="SHAP log loss value - feature contribution to loss",
         xaxis_title="Feature",
     )
     # Order x axis by cohen's d in reverse order

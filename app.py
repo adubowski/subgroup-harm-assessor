@@ -46,7 +46,7 @@ from metrics import (
 
 
 def prepare_app(
-    n_samples=0, dataset="adult", bias=False, train_split=True, model="rf"
+    n_samples=0, dataset="adult", bias=False, train_split=True, model="rf", sensitive_features=None
 ) -> Tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray, np.ndarray, pd.Index]:
     """Loads the data and trains the classifier
 
@@ -68,7 +68,7 @@ def prepare_app(
         onehot_X_train,
         onehot_X_test,
         cat_features,
-    ) = load_data(n_samples=n_samples, dataset=dataset, train_split=train_split)
+    ) = load_data(n_samples=n_samples, dataset=dataset, train_split=train_split, sensitive_features=sensitive_features)
 
     random_subgroup = pd.Series(
         np.random.choice([True, False], size=len(X_test), p=[0.5, 0.5])
@@ -98,6 +98,7 @@ def run_app(
     depth=1,
     min_support=100,
     min_support_ratio=0.1,
+    sensitive_features=None,
 ):
     """Runs the app with the given qf_metric"""
     use_random_subgroup = (
@@ -116,6 +117,7 @@ def run_app(
         bias=bias,
         train_split=train_split,
         model=model,
+        sensitive_features=sensitive_features,
     )
 
     app.layout = html.Div(
@@ -771,6 +773,7 @@ def run_app(
                 min_support_ratio=min_support_ratio,
                 max_support_ratio=0.5,  # To prevent finding majority subgroups
                 logging_level=logging.INFO,
+                sensitive_features=sensitive_features,
             )
             result_set_df = result_set.to_dataframe()
             metrics = []
@@ -956,6 +959,7 @@ def run_app(
         sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
         description = data["descriptions"][subgroup]
         subgroup_description = str(description).replace(" ", "")
+        subgroup_description = subgroup_description.replace("AND", " AND ")
         metric = data["metric"]
 
         y_true = y_true_global_test.copy()
@@ -1067,6 +1071,12 @@ if __name__ == "__main__":
         default=0.1,
         help="Min support ratio for the subgroup discovery algorithm",
     )
+    parser.add_argument(
+        "--sensitive-features",
+        type=str,
+        nargs="+",
+        help="Comma-separated list of sensitive features to use for the subgroup discovery algorithm",
+    )
 
     args = parser.parse_args()
     train_split = False if args.train_split in ("False", "false", False, "F") else True
@@ -1080,4 +1090,5 @@ if __name__ == "__main__":
         args.depth,
         args.min_support,
         args.min_support_ratio,
+        args.sensitive_features,
     )
