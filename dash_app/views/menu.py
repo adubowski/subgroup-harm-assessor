@@ -38,7 +38,6 @@ def get_shap_barchart(
 ):
     # Sort the values by mean
     agg_df = shap_values_df.groupby(group_feature).mean()
-    print(agg_df)
     # Create the fig
     fig = px.bar(
         agg_df,

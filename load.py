@@ -295,7 +295,7 @@ def get_fairsd_result_set(
     min_quality=0.01,
     depth=1,
     min_support=100,
-    result_set_size=20,
+    result_set_size=30,
     sensitive_features=None,
     **kwargs,
 ) -> ResultSet:

@@ -101,6 +101,7 @@ def run_app(
     min_support=100,
     min_support_ratio=0.1,
     sensitive_features=None,
+    min_quality=0.01,
 ):
     """Runs the app with the given qf_metric"""
     use_random_subgroup = (
@@ -815,6 +816,7 @@ def run_app(
                 max_support_ratio=0.5,  # To prevent finding majority subgroups
                 logging_level=logging.INFO,
                 sensitive_features=sensitive_features,
+                min_quality=min_quality,
             )
             result_set_df = result_set.to_dataframe()
             metrics = []
@@ -1002,7 +1004,7 @@ def run_app(
         sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
         description = data["descriptions"][subgroup]
         subgroup_description = str(description).replace(" ", "")
-        subgroup_description = subgroup_description.replace("AND", " AND ")
+        subgroup_description = subgroup_description.replace("AND", " AND <br>")
         metric = data["metric"]
 
         y_true = y_true_global_test.copy()
@@ -1123,6 +1125,12 @@ if __name__ == "__main__":
         help="Min support ratio for the subgroup discovery algorithm",
     )
     parser.add_argument(
+        "--min-quality",    
+        type=float,
+        default=0.01,
+        help="Minimum quality for the subgroup discovery algorithm",
+    )
+    parser.add_argument(
         "--sensitive-features",
         type=str,
         nargs="+",
@@ -1142,4 +1150,5 @@ if __name__ == "__main__":
         args.min_support,
         args.min_support_ratio,
         args.sensitive_features,
+        args.min_quality,
     )
