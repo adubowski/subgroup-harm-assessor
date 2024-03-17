@@ -458,7 +458,7 @@ def run_app(
                                             ),
                                             # Add slider for sensitivity of the test
                                             html.H6(
-                                                "Select rounding (precision) level for SHAP values in the KS test: "
+                                                "Select rounding level (number of decimal points) for SHAP values in the KS test: "
                                             ),
                                             dcc.Slider(
                                                 0,
@@ -469,7 +469,7 @@ def run_app(
                                             ),
                                             html.H6(
                                                 "Rounding level is the decimal point level at which SHAP values should be rounded because they are considered 'distinct'," +
-                                                  " in order to avoid detecting statistically significant but minor differences between distributions in the KS test. E.g. 1 means rounding to 1 decimal point."
+                                                  " in order to avoid detecting statistically significant but minor differences between distributions in the KS test."
                                             ),
                                             dbc.Row([
                                                 dbc.Col([
