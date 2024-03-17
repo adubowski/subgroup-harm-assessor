@@ -165,37 +165,21 @@ def run_app(
                                                     "label": "Equalized Odds Difference",
                                                     "value": "equalized_odds_diff",
                                                 },
-                                                # {
-                                                #     "label": "Equalized Odds Ratio",
-                                                #     "value": "equalized_odds_ratio",
-                                                # },
                                                 {
                                                     "label": "Avg Log Loss Difference",
                                                     "value": "average_log_loss_diff",
                                                 },
-                                                # {
-                                                #     "label": "Avg Log Loss Ratio",
-                                                #     "value": "average_log_loss_ratio",
-                                                # },
-                                                {
-                                                    "label": "Brier Score Difference",
-                                                    "value": "brier_score_diff",
-                                                },
-                                                # {
-                                                #     "label": "Brier Score Ratio",
-                                                #     "value": "brier_score_ratio",
-                                                # },
                                                 {
                                                     "label": "AUROC (ROC AUC) Difference",
                                                     "value": "auroc_diff",
                                                 },
-                                                # {
-                                                #     "label": "AUROC (ROC AUC) Ratio",
-                                                #     "value": "auroc_ratio",
-                                                # },
                                                 {
                                                     "label": "Miscalibration Difference",
                                                     "value": "miscalibration_diff",
+                                                },
+                                                {
+                                                    "label": "Brier Score Difference",
+                                                    "value": "brier_score_diff",
                                                 },
                                                 {
                                                     "label": "Accuracy Difference",
@@ -428,8 +412,8 @@ def run_app(
                                                     dcc.Slider(
                                                         4,
                                                         20,
-                                                        4,
-                                                        value=12,
+                                                        2,
+                                                        value=10,
                                                         id="calibration-slider",
                                                     ),
                                                 ]

@@ -20,8 +20,7 @@ false_negative_score = lambda y_true, y_pred: 1 - true_positive_score(y_true, y_
 Y_PRED_METRICS = (
     "auprc_diff",
     "auprc_ratio",
-    "accuracy_diff",
-    "accuracy_ratio",
+    "acc_diff",
     "f1_diff",
     "f1_ratio",
     "equalized_odds_diff",
@@ -191,14 +190,13 @@ def sort_quality_metrics_df(
     elif quality_metric.split("_")[-1] in ("difference", "diff"):
         # If metric is a loss (lower is better)
         if (
-            "loss" in quality_metric
-            or "miscal" in quality_metric
-            or "fpr" in quality_metric
-            or "fnr" in quality_metric
+            "acc" in quality_metric
+            or "au" in quality_metric
+            or "f1" in quality_metric
         ):
             # Sort the result_set_df in descending order based on the metric_score
             result_set_df = result_set_df.sort_values(
-                by="metric_score", ascending=False
+                by="metric_score", ascending=True
             )
         # If max differences are below one, we are talking about difference in ratios, so we should show the results in ascending order
         else:

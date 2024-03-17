@@ -135,7 +135,7 @@ def plot_roc_curves(y_true, y_pred_prob, sg_feature, title=None):
 
 
 def plot_calibration_curve(
-    y_true, y_pred_prob, sg_feature, n_bins=20, strategy="uniform"
+    y_true, y_pred_prob, sg_feature, n_bins=10, strategy="uniform"
 ):
     """Plots calibration curve for a classifier for group and its opposite"""
 
@@ -225,7 +225,7 @@ def get_sg_hist(y_df_local, categories=["TN", "FN", "TP", "FP"], title=None):
 
 
 def get_data_table(
-    subgroup_description, y_true, y_pred, y_pred_prob, qf_metric, sg_feature, n_bins=12
+    subgroup_description, y_true, y_pred, y_pred_prob, qf_metric, sg_feature, n_bins=10
 ):
     """Generates a data table with the subgroup description and the subgroup size"""
 
@@ -236,8 +236,10 @@ def get_data_table(
     cal_score = miscalibration_score(
         y_true[sg_feature], y_pred_prob[sg_feature], n_bins=n_bins
     ).round(3)
-    avg_loss = log_loss(y_true[sg_feature], y_pred_prob[sg_feature]).round(3)
+    # avg_loss = log_loss(y_true[sg_feature], y_pred_prob[sg_feature]).round(3)
     brier_score = np.mean((y_true[sg_feature] - y_pred_prob[sg_feature]) ** 2).round(3)
+
+    metric_name = get_name_from_metric_str(qf_metric)
 
     if qf_metric in Y_PRED_METRICS:
         quality_score = get_quality_metric_from_str(qf_metric)(
@@ -258,7 +260,7 @@ def get_data_table(
             "AUROC",
             "Miscalibration score",
             "Brier score",
-            "Average Log Loss",
+            metric_name
         ],
         "Value": [
             subgroup_description,
@@ -266,13 +268,12 @@ def get_data_table(
             auroc,
             cal_score,
             brier_score,
-            avg_loss,
+            quality_score
         ],
     }
-    metric_name = get_name_from_metric_str(qf_metric)
-    if metric_name != "Average Log Loss":
-        table_content["Statistic"].append(metric_name)
-        table_content["Value"].append(quality_score)
+    # if metric_name != "Average Log Loss":
+    #     table_content["Statistic"].append(metric_name)
+    #     table_content["Value"].append(quality_score)
 
     df = pd.DataFrame(table_content)
     data_table = dash_table.DataTable(
