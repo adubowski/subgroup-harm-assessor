@@ -498,7 +498,11 @@ def run_app(
                                                             {
                                                                 "label": "Distribution details (violin plot)",
                                                                 "value": "violin",
-                                                            }
+                                                            },
+                                                            {
+                                                                "label": "Mean difference",
+                                                                "value": "mean_diff",
+                                                            },
                                                         ],
                                                         value="mean",
                                                         style={
