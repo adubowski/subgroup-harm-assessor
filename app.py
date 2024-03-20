@@ -147,7 +147,7 @@ def run_app(
                                     ),
                                     dbc.Col(
                                         html.H6(
-                                            "1. Subgroup Discovery Metric: ",
+                                            "0. Subgroup Discovery Metric: ",
                                         ),
                                         style={
                                             "display": "flex",
@@ -220,7 +220,7 @@ def run_app(
                                     # Insert center block
                                     dbc.Col(
                                         html.Center(
-                                            html.H6("2. Select Subgroup: "),
+                                            html.H6("1. Select Subgroup: "),
                                         ),
                                         width=3,
                                         style={
@@ -259,7 +259,7 @@ def run_app(
                 children=[
                     dcc.Tab(
                         id="impact",
-                        label="3. Misclassifications Overview",
+                        label="2. Misclassifications Overview",
                         value="impact",
                         children=[
                             # Split the tab into two columns
@@ -382,7 +382,7 @@ def run_app(
                         ],
                     ),
                     dcc.Tab(
-                        label="4. Performance and Calibration",
+                        label="3. Performance and Calibration",
                         value="performance_tab",
                         children=[
                             # Split into two equal width columns with headers
@@ -412,7 +412,7 @@ def run_app(
                                                     dcc.Slider(
                                                         4,
                                                         20,
-                                                        2,
+                                                        1,
                                                         value=10,
                                                         id="calibration-slider",
                                                     ),
@@ -426,7 +426,7 @@ def run_app(
                         ],
                     ),
                     dcc.Tab(
-                        label="5. Loss contributions per feature",
+                        label="4. Loss contributions per feature",
                         value="feature_contributions_tab",
                         children=[
                             dbc.Row(
@@ -536,7 +536,7 @@ def run_app(
                         ],
                     ),
                     dcc.Tab(
-                        label="6. Loss contributions per feature value",
+                        label="5. Loss contributions per feature value",
                         value="feature_value_contributions_tab",
                         children=[
                             # Split into two equal width columns with headers
@@ -589,7 +589,7 @@ def run_app(
                         ],
                     ),
                     dcc.Tab(
-                        label="7. Class Imbalances",
+                        label="6. Class Imbalances",
                         value="data_tab",
                         children=[
                             # Split into two equal width columns with headers
