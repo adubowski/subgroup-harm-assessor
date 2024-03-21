@@ -1,1 +1,1 @@
-APP_NAME = "Subgroup Harms & Predictive Bias Vis"
+APP_NAME = "Subgroup Harm Assessor"

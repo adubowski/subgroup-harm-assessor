@@ -130,7 +130,6 @@ def run_app(
             # Header
             dbc.Row(
                 [
-                    # Left column
                     dbc.Col(
                         id="left-column",
                         children=[
@@ -211,13 +210,11 @@ def run_app(
                             ),
                         ],
                     ),
-                    # Right column
                     dbc.Col(
                         id="right-column",
                         children=[
                             dbc.Row(
                                 [
-                                    # Insert center block
                                     dbc.Col(
                                         html.Center(
                                             html.H6("1. Select Subgroup: "),
@@ -232,7 +229,6 @@ def run_app(
                                         dcc.Dropdown(
                                             id="subgroup-dropdown",
                                             options=[],
-                                            # value=0,
                                             style={
                                                 "align-items": "left",
                                                 "height": "fit-content",
@@ -275,15 +271,12 @@ def run_app(
                                                     "border-bottom": "3px solid #d3d3d3"
                                                 },
                                             ),
-                                            # Update group description from callback
                                             dbc.Row(
                                                 [
-                                                    # Ensure the col is on the left from the confusion matrix
                                                     dbc.Col(
                                                         dbc.Row(
                                                             [
                                                                 dbc.Col(
-                                                                    # [
                                                                     html.Div(
                                                                         id="simple-baseline-table",
                                                                         className="six-columns",
@@ -311,9 +304,7 @@ def run_app(
                                                 ]
                                             ),
                                             html.Br(),
-                                            # Add placeholder for graph
                                             dcc.Graph(id="simple-baseline-hist"),
-                                            # Add slider for decision threshold
                                             html.H6(
                                                 "Select decision threshold for the model:"
                                             ),
@@ -330,7 +321,6 @@ def run_app(
                                             "margin-right": "0.5",
                                         },
                                     ),
-                                    # html.Br(),
                                     html.Div(
                                         className="six columns",
                                         children=[
@@ -340,7 +330,6 @@ def run_app(
                                                     "border-bottom": "3px solid #d3d3d3"
                                                 },
                                             ),
-                                            # Update group description from callback
                                             dbc.Row(
                                                 [
                                                     dbc.Col(
@@ -359,7 +348,6 @@ def run_app(
                                                     dbc.Col(
                                                         dcc.Graph(
                                                             id="simple-subgroup-conf",
-                                                            # Update height and font size of confusion matrix
                                                             style={
                                                                 "height": "20vh",
                                                                 "font-size": "0.4rem",
@@ -385,7 +373,6 @@ def run_app(
                         label="3. Performance and Calibration",
                         value="performance_tab",
                         children=[
-                            # Split into two equal width columns with headers
                             html.Div(
                                 className="row",
                                 children=[
@@ -400,9 +387,6 @@ def run_app(
                                             ),
                                             dbc.Col(
                                                 [
-                                                    # dcc.Graph(
-                                                    #     id="perf-prc",
-                                                    # ),
                                                     dcc.Graph(
                                                         id="calibration_curve",
                                                     ),
@@ -436,7 +420,6 @@ def run_app(
                                         style={
                                             "align-items": "center",
                                             "height": "fit-content",
-                                            # "height": "1000",
                                             "font-size": "0.8rem",
                                         },
                                     ),
@@ -456,7 +439,6 @@ def run_app(
                                                 value=0.05,
                                                 id="feat-alpha-slider",
                                             ),
-                                            # Add slider for sensitivity of the test
                                             html.H6(
                                                 "Select rounding level (number of decimal points) for SHAP values in the KS test: "
                                             ),
@@ -539,7 +521,6 @@ def run_app(
                         label="5. Loss contributions per feature value",
                         value="feature_value_contributions_tab",
                         children=[
-                            # Split into two equal width columns with headers
                             html.Div(
                                 className="row",
                                 children=[
@@ -547,11 +528,9 @@ def run_app(
                                         [
                                             dbc.Col(
                                                 [
-                                                    # Add header for feature selection
                                                     html.H6(
                                                         "Select feature for value contributions:"
                                                     ),
-                                                    # Add dropdown for feature selection
                                                     dcc.Dropdown(
                                                         id="feat-val-feature-dropdown",
                                                         options=[
@@ -573,12 +552,9 @@ def run_app(
                                         ]
                                     ),
                                     html.Br(),
-                                    dbc.Row(
-                                        [
-                                            # Add a placeholder for the graph
-                                            dcc.Graph(id="feat-val-violin-plot"),
-                                        ]
-                                    ),
+                                    dbc.Row([
+                                        dcc.Graph(id="feat-val-violin-plot"),
+                                    ]),
                                     html.Br(),
                                     dcc.Slider(
                                         2, 20, 2, value=8, id="feat-val-hist-slider"
@@ -603,7 +579,6 @@ def run_app(
                                                     html.H6(
                                                         "Select feature for distribution plots:"
                                                     ),
-                                                    # Add dropdown for feature selection
                                                     dcc.Dropdown(
                                                         id="data-feature-dropdown",
                                                         options=[
@@ -644,7 +619,7 @@ def run_app(
                                             ),
                                             dbc.Col(
                                                 [
-                                                    # Add dropdown for percentage/absolute values
+                                                    # Dropdown for percentage/absolute values
                                                     html.H6(
                                                         "Select aggregation method for distribution plots:"
                                                     ),
@@ -677,11 +652,9 @@ def run_app(
                                     dbc.Row(
                                         [
                                             dbc.Col([
-                                                # Add a placeholder for the graph
                                                 dcc.Graph(id="data-class-dist-plot"),
                                             ]),
                                             dbc.Col([
-                                                # Add a placeholder for the graph
                                                 dcc.Graph(id="data-pred-dist-plot"),
                                             ]),
                                         ]
@@ -809,7 +782,6 @@ def run_app(
             result_set_df = result_set.to_dataframe()
             metrics = []
             for idx in range(len(result_set_df)):
-                # Add the metric value (e.g. Accuracy for acc_diff)
                 description = result_set.get_description(idx)
                 sg_feature = description.to_boolean_array(X_test_global)
                 sg_y_pred = (
@@ -824,7 +796,6 @@ def run_app(
 
             result_set_df["metric_score"] = metrics
             result_set_df = sort_quality_metrics_df(result_set_df, metric)
-            # Get the result set json including the ordering from the sort (get the ordering
             return (
                 baseline_data_table,
                 baseline_conf_mat,
@@ -894,7 +865,6 @@ def run_app(
 
     # Get data distributions based on subgroup selection
     @app.callback(
-        # Output("data-feature-dist-plot", "figure"),
         Output("data-class-dist-plot", "figure"),
         Output("data-pred-dist-plot", "figure"),
         Input("data-feature-dropdown", "value"),
@@ -980,7 +950,7 @@ def run_app(
     def get_subgroup_stats(data, subgroup, threshold, nbins, agg):
         """Returns the group description and updates the charts of the selected subgroup"""
         if subgroup is None:
-            # TODO: Return charts without subgroup
+            # TODO: Return baseline-only plots when no subgroup is selected
             raise PreventUpdate
         if len(data["descriptions"]) == 0:
             print("Error: No subgroups found. This should not happen.")
@@ -1092,7 +1062,6 @@ if __name__ == "__main__":
         default="rf",
         help="Model to use for the evaluation. Available options are: 'rf', 'dt', 'xgb'",
     )
-    # Add depth and min support ratio
     parser.add_argument(
         "-d",
         "--depth",
