@@ -50,7 +50,7 @@ from metrics import (
 
 
 def prepare_app(
-    n_samples=0, dataset="adult", bias=False, train_split=True, model="rf", sensitive_features=None
+    n_samples=0, dataset="adult", bias=False, test_split=0.3, model="rf", sensitive_features=None
 ) -> Tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray, np.ndarray, pd.Index]:
     """Loads the data and trains the classifier
 
@@ -72,7 +72,7 @@ def prepare_app(
         onehot_X_train,
         onehot_X_test,
         cat_features,
-    ) = load_data(n_samples=n_samples, dataset=dataset, train_split=train_split, sensitive_features=sensitive_features)
+    ) = load_data(n_samples=n_samples, dataset=dataset, test_split=test_split, sensitive_features=sensitive_features)
 
     random_subgroup = pd.Series(
         np.random.choice([True, False], size=len(X_test), p=[0.5, 0.5])
@@ -97,7 +97,7 @@ def run_app(
     dataset: str,
     bias: Union[str, bool] = False,
     random_subgroup=False,
-    train_split=True,
+    test_split=True,
     model="rf",
     depth=1,
     min_support=100,
@@ -120,7 +120,7 @@ def run_app(
         n_samples=n_samples,
         dataset=dataset,
         bias=bias,
-        train_split=train_split,
+        test_split=test_split,
         model=model,
         sensitive_features=sensitive_features,
     )
@@ -1110,9 +1110,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-s",
-        "--train_split",
-        default=True,
-        help="Flag whether to split the number of samples selected into train and test. Only test data is then used for visualizations",
+        "--test_split",
+        default=0.3,
+        help="Ratio of samples selected for the test set used for visualizations. 0 and 1 will use the full dataset for the training and test set (useful with smaller models).",
     )
     parser.add_argument(
         "-m",
@@ -1154,13 +1154,12 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    train_split = False if args.train_split in ("False", "false", False, "F") else True
     run_app(
         args.n_samples,
         args.dataset,
         args.bias,
         args.random_subgroup,
-        train_split,
+        args.test_split,
         args.model,
         args.depth,
         args.min_support,

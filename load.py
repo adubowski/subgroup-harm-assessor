@@ -81,14 +81,14 @@ def import_dataset(dataset: str, sensitive_features: List[str] = None):
 def load_data(
     dataset="adult",
     n_samples=0,
-    train_split=True,
+    test_split=0.3,
     sensitive_features: List[str] = None,
 ):
     """Load data from UCI Adult dataset.
     Args:
         dataset (str): Dataset to be loaded, currently only Adult and German Credit datasets are supported
         n_samples (int, optional): Number of samples to load. Select 0 to load all.
-        train_split (bool, optional): Flag whether to split the number of selected data samples into train and test
+        test_split (bool, optional): Ratio of selected data samples for test set
         sensitive_features (list, optional): Sensitive features to be used in the dataset. Defaults to None.
     """
     X, y_true = import_dataset(dataset, sensitive_features)
@@ -105,7 +105,7 @@ def load_data(
         y_true = y_true.iloc[:n_samples]
         onehot_X = onehot_X.iloc[:n_samples]
 
-    if train_split:
+    if test_split and float(test_split) < 1.0:
         (
             X_train,
             X_test,
@@ -113,7 +113,7 @@ def load_data(
             y_true_test,
             onehot_X_train,
             onehot_X_test,
-        ) = train_test_split(X, y_true, onehot_X, test_size=0.3, random_state=0)
+        ) = train_test_split(X, y_true, onehot_X, test_size=test_split, random_state=0)
         # Reset indices
         X_train.reset_index(inplace=True, drop=True)
         X_test.reset_index(inplace=True, drop=True)
@@ -223,7 +223,7 @@ def get_classifier(
         classifier = DecisionTreeClassifier(min_samples_leaf=30, max_depth=8)
     elif model == "xgb":
         from xgboost import XGBClassifier
-        classifier = XGBClassifier()
+        classifier = XGBClassifier() # FIXME: Issue with german credit dataset
     else:
         raise ValueError(f"Model {model} not supported. Supported models: rf, dt, xgb.")
         
@@ -260,7 +260,7 @@ def get_shap_values(classifier, d_train, X, cat_features, combine_cat_features=T
     Combines one-hot encoded categorical features into original features."""
     # Producing shap values
     explainer = shap.TreeExplainer(classifier)
-    # TODO: Add interation values
+    # TODO: Add and evaluate interation values
     # shap_interaction = explainer.shap_interaction_values(X)
 
     shap_values = explainer(d_train)
@@ -284,8 +284,6 @@ def get_shap_logloss(
     shap_values_logloss_all = explainer_bg_100.shap_values(d_train, y_true)
     if len(shap_values_logloss_all) == 2:
         shap_values_logloss_all = shap_values_logloss_all[1]
-    print("Shap values log loss shape: ", shap_values_logloss_all.shape)
-    print(len(d_train.columns))
     shap_logloss_df = pd.DataFrame(shap_values_logloss_all, columns=d_train.columns)
     if combine_cat_features:
         shap_logloss_df = combine_all_one_hot_shap_logloss(
