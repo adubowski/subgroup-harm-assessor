@@ -31,7 +31,7 @@ def import_dataset(dataset: str, sensitive_features: List[str] = None):
     if dataset == "adult":
         dataset_id = 1590
         target = ">50K"
-        cols_to_drop = ["fnlwgt", "education-num", "sex", "race", "native-country"]
+        cols_to_drop = ["fnlwgt", "education-num"]
         if sensitive_features is not None:
             cols_to_drop = [col for col in cols_to_drop if col not in sensitive_features]
     elif dataset in ("credit_g", "german", "german_credit"):
