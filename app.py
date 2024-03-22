@@ -257,7 +257,7 @@ def run_app(
                 children=[
                     dcc.Tab(
                         id="impact",
-                        label="2. Misclassifications Overview",
+                        label="2. Underperformance Overview",
                         value="impact",
                         children=[
                             # Split the tab into two columns
@@ -307,16 +307,16 @@ def run_app(
                                             ),
                                             html.Br(),
                                             dcc.Graph(id="simple-baseline-hist"),
-                                            html.H6(
-                                                "Select decision threshold for the model:"
-                                            ),
-                                            dcc.Slider(
-                                                0.1,
-                                                0.9,
-                                                0.1,
-                                                value=0.5,
-                                                id="simple-baseline-threshold-slider",
-                                            ),
+                                            # html.H6(
+                                            #     "Select decision threshold for the model:"
+                                            # ),
+                                            # dcc.Slider(
+                                            #     0.1,
+                                            #     0.9,
+                                            #     0.1,
+                                            #     value=0.5,
+                                            #     id="simple-baseline-threshold-slider",
+                                            # ),
                                         ],
                                         style={
                                             "textAlign": "center",
@@ -722,11 +722,12 @@ def run_app(
         Output("subgroup-dropdown", "options"),
         Output("result-set-dict", "data"),
         Input("fairness-metric-dropdown", "value"),
-        Input("simple-baseline-threshold-slider", "value"),
+        # Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_baseline_stats_and_subgroups(metric, threshold):
+    def get_baseline_stats_and_subgroups(metric, threshold=0.5):
         if not metric:
             raise PreventUpdate
+
 
         y_true = y_true_global_test.copy()
         y_pred_prob = y_pred_prob_global.copy()
@@ -930,10 +931,10 @@ def run_app(
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("data-hist-slider", "value"),
-        Input("simple-baseline-threshold-slider", "value"),
         Input("data-label-dropdown", "value"),
+        # Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_data_feat_distr(feature, agg, subgroup, data, bins, threshold, class_label):
+    def get_data_feat_distr(feature, agg, subgroup, data, bins, class_label, threshold=0.5):
         """Produces a bar chart or line plot with the data feature values counts for the selected subgroup"""
         if not feature:
             raise PreventUpdate
@@ -1001,11 +1002,11 @@ def run_app(
         Output("feat-bar", "figure"),
         Input("result-set-dict", "data"),
         Input("subgroup-dropdown", "value"),
-        Input("simple-baseline-threshold-slider", "value"),
         Input("calibration-slider", "value"),
         Input("feat-agg-dropdown", "value"),
+        # Input("simple-baseline-threshold-slider", "value"),
     )
-    def get_subgroup_stats(data, subgroup, threshold, nbins, agg):
+    def get_subgroup_stats(data, subgroup, nbins, agg, threshold=0.5):
         """Returns the group description and updates the charts of the selected subgroup"""
         if subgroup is None:
             # TODO: Return baseline-only plots when no subgroup is selected
@@ -1094,18 +1095,18 @@ if __name__ == "__main__":
         help="Dataset to be used in the evaluation. Available options are: 'adult', 'credit_g', 'heloc'",
     )
     parser.add_argument(
-        "-b",
-        "--bias",
-        type=str,
-        default=False,
-        help="Type of bias to add to the dataset",
-    )
-    parser.add_argument(
         "-r",
         "--random_subgroup",
         action="store_true",
         default=False,
         help="Flag whether to use a random subgroup for evaluation",
+    )
+    parser.add_argument(
+        "-b",
+        "--bias",
+        type=str,
+        default=False,
+        help="Type of bias to add to the dataset",
     )
     parser.add_argument(
         "-s",
@@ -1149,7 +1150,7 @@ if __name__ == "__main__":
         "--sensitive_features",
         type=str,
         nargs="+",
-        help="Comma-separated list of sensitive features to use for the subgroup discovery algorithm",
+        help="List of sensitive features to use for the subgroup discovery algorithm",
     )
 
     args = parser.parse_args()
