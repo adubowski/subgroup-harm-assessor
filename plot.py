@@ -370,7 +370,7 @@ def get_data_distr_chart(
     return fig
 
 
-def get_feat_shap_violin_plot(shap_values_df, sg_feature=None):
+def get_feat_val_violin_plots(shap_values_df, sg_feature=None):
     """Returns a violin plot for the features SHAP values in the subgroup and the baseline"""
     shap_values_df = transform_box_data(shap_values_df, sg_feature)
 
@@ -399,7 +399,7 @@ def get_feat_shap_violin_plot(shap_values_df, sg_feature=None):
     return fig
 
 
-def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbins=20):
+def get_feat_val_violin_plot(X, shap_df, sg_feature, feature, description, nbins=20):
     """Returns a figure with a violin plot for the feature value SHAP contributions in the subgroup and the baseline"""
     feature_type = "categorical"
     orig_df = X.copy()
@@ -461,6 +461,144 @@ def get_feat_shap_violin_plots(X, shap_df, sg_feature, feature, description, nbi
         yaxis_title="SHAP log loss value",
         violinmode="group",
         # yaxis=dict(range=[-0.4, 0.4])
+    )
+    # If feature is continuous, we need to sort the bins
+    if feature_type == "continuous":
+        fig.update_xaxes(categoryorder="array", categoryarray=sorted_bins)
+    else:
+        fig.update_xaxes(categoryorder="category ascending")
+    # Update height
+    fig.update_layout(height=700)
+    return fig
+
+
+def get_feat_val_box(X, shap_df, sg_feature, feature, description, nbins=20):
+    """Returns a figure with a box plot for the feature value SHAP contributions in the subgroup and the baseline"""
+    feature_type = "categorical"
+    orig_df = X.copy()
+    # If data is continuous, we need to bin it
+    if X[feature].dtype in [np.float64, np.int64]:
+        X[feature] = pd.cut(X[feature], bins=nbins)
+        bins = X[feature].cat.categories.astype(str)
+        sorted_bins = sorted(
+            bins, key=lambda x: float(x.split(",")[0].strip("(").strip(" ").strip("]"))
+        )
+        X[feature] = X[feature].astype(str)
+        feature_type = "continuous"
+
+    # Merge the shap values with the feature values such that we can plot the violin plot of shap values per feature value
+    concat_df = pd.concat([shap_df[feature], X[feature]], axis=1)
+    concat_df.columns = ["SHAP", feature]
+    
+    # Create a violin plot for the feature values
+    fig = go.Figure()
+
+    # Add trace for baseline
+    fig.add_trace(
+        go.Box(
+            x=concat_df[feature],
+            y=concat_df["SHAP"],
+            name="Baseline",
+            boxpoints="all",
+            text=orig_df.apply(lambda row: ' '.join(f'{i}:{v}' for i, v in row.items()), axis=1),
+            hoverinfo="y+text",
+        )
+    )
+
+    # Add trace for subgroup
+    fig.add_trace(
+        go.Box(
+            x=concat_df[feature][sg_feature],
+            y=concat_df["SHAP"][sg_feature],
+            name="Subgroup",
+            boxpoints="all",
+            text=orig_df[sg_feature].apply(lambda row: ' '.join(f'{i}:{v}' for i, v in row.items()), axis=1),
+            hoverinfo="y+text",
+        )
+    )
+    slider_note = (
+        "Use slider below to adjust the (max) number of bins for the violin plot"
+        if feature_type == "continuous"
+        else "When the selected feature is categorical, slider changes do not affect the plot."
+    )
+    # Update layout
+    fig.update_layout(
+        title="Feature distribution for "
+        + feature
+        + f" in the subgroup ({description}) and the baseline <br>"
+        + "The lower the feature's values, the higher its informativeness",
+        xaxis_title=f"Feature"
+        + f" values of {feature} <br> Feature type: {feature_type}; {slider_note}",
+        yaxis_title="SHAP log loss value",
+    )
+    # If feature is continuous, we need to sort the bins
+    if feature_type == "continuous":
+        fig.update_xaxes(categoryorder="array", categoryarray=sorted_bins)
+    else:
+        fig.update_xaxes(categoryorder="category ascending")
+    # Update height
+    fig.update_layout(height=700)
+    return fig
+
+
+def get_feat_val_bar(X, shap_df, sg_feature, feature, description, nbins=20, agg="mean"):
+    """Returns a figure with a bar plot for the feature value SHAP contributions in the subgroup and the baseline"""
+    feature_type = "categorical"
+    orig_df = X.copy()
+    # If data is continuous, we need to bin it
+    if X[feature].dtype in [np.float64, np.int64]:
+        X[feature] = pd.cut(X[feature], bins=nbins)
+        bins = X[feature].cat.categories.astype(str)
+        sorted_bins = sorted(
+            bins, key=lambda x: float(x.split(",")[0].strip("(").strip(" ").strip("]"))
+        )
+        X[feature] = X[feature].astype(str)
+        feature_type = "continuous"
+
+    # Merge the shap values with the feature values such that we can plot the violin plot of shap values per feature value
+    concat_df = pd.concat([shap_df[feature], X[feature]], axis=1)
+    concat_df.columns = ["SHAP", feature]
+    
+    # Create a violin plot for the feature values
+    fig = go.Figure()
+
+    baseline_df = concat_df.groupby(feature)["SHAP"].agg(agg)
+    sg_df = concat_df[sg_feature].groupby(feature)["SHAP"].agg(agg)
+    
+    # Add trace for baseline
+    fig.add_trace(
+        go.Bar(
+            x=baseline_df.index,
+            y=baseline_df.values,
+            name="Baseline",
+            text=orig_df.apply(lambda row: ' '.join(f'{i}:{v}' for i, v in row.items()), axis=1),
+            hoverinfo="y+text",
+        )
+    )
+    # Add trace for subgroup
+    fig.add_trace(
+        go.Bar(
+            x=sg_df.index,
+            y=sg_df.values,
+            name="Subgroup",
+            text=orig_df[sg_feature].apply(lambda row: ' '.join(f'{i}:{v}' for i, v in row.items()), axis=1),
+            hoverinfo="y+text",
+        )
+    )
+    slider_note = (
+        "Use slider below to adjust the (max) number of bins for the violin plot"
+        if feature_type == "continuous"
+        else "When the selected feature is categorical, slider changes do not affect the plot."
+    )
+    # Update layout
+    fig.update_layout(
+        title="Feature distribution for "
+        + feature
+        + f" in the subgroup ({description}) and the baseline <br>"
+        + "The lower the feature's values, the higher its informativeness",
+        xaxis_title=f"Feature"
+        + f" values of {feature} <br> Feature type: {feature_type}; {slider_note}",
+        yaxis_title="Count",
     )
     # If feature is continuous, we need to sort the bins
     if feature_type == "continuous":

@@ -32,8 +32,10 @@ from plot import (
     get_data_table,
     get_feat_bar,
     get_feat_box,
-    get_feat_shap_violin_plot,
-    get_feat_shap_violin_plots,
+    get_feat_val_violin_plot,
+    get_feat_val_violin_plots,
+    get_feat_val_box,
+    get_feat_val_bar,
     get_feat_table,
     get_sg_hist,
     plot_calibration_curve,
@@ -548,12 +550,47 @@ def run_app(
                                                     ),
                                                 ]
                                             ),
-                                            dbc.Col([]),
+                                            dbc.Col([
+                                                html.H6("Select aggregation method for feature value contributions:"),
+                                                dcc.Dropdown(
+                                                    id="feat-val-agg-dropdown",
+                                                    options=[
+                                                        {
+                                                            "label": "Mean",
+                                                            "value": "mean",
+                                                        },
+                                                        {
+                                                            "label": "Median",
+                                                            "value": "median",
+                                                        },
+                                                        {
+                                                            "label": "Sum",
+                                                            "value": "sum",
+                                                        },
+                                                        # {
+                                                        #     "label": "Statistical summary (box plot)",
+                                                        #     "value": "box",
+                                                        # }, # FIXME: Box plots should be next to each other not on top
+                                                        {
+                                                            "label": "Distribution details (violin plot)",
+                                                            "value": "violin",
+                                                        },
+                                                    ],
+                                                    value="violin",
+                                                    style={
+                                                        "align-items": "center",
+                                                        "text-align": "center",
+                                                        "width": "50%",
+                                                    },
+                                                    # Disable clearing
+                                                    clearable=False,
+                                                ),
+                                            ]),
                                         ]
                                     ),
                                     html.Br(),
                                     dbc.Row([
-                                        dcc.Graph(id="feat-val-violin-plot"),
+                                        dcc.Graph(id="feat-val-plot"),
                                     ]),
                                     html.Br(),
                                     dcc.Slider(
@@ -808,13 +845,14 @@ def run_app(
 
     # Get feature value plot based on subgroup and feature selection
     @app.callback(
-        Output("feat-val-violin-plot", "figure"),
+        Output("feat-val-plot", "figure"),
         Input("feat-val-feature-dropdown", "value"),
         Input("subgroup-dropdown", "value"),
         Input("result-set-dict", "data"),
         Input("feat-val-hist-slider", "value"),
+        Input("feat-val-agg-dropdown", "value"),
     )
-    def get_feat_val_violin_plot(feature, subgroup, data, nbins):
+    def get_feat_val_plot(feature, subgroup, data, nbins, agg):
         """Produces a violin chart or line plot with the feature value contributions for the selected subgroup"""
         if not feature:
             raise PreventUpdate
@@ -830,14 +868,34 @@ def run_app(
 
         description = data["descriptions"][subgroup]
         sg_feature = pd.read_json(data["sg_features"][subgroup], typ="series")
-        return get_feat_shap_violin_plots(
-            X_test_global.copy(),
-            shap_logloss_df_global.copy(),
-            sg_feature,
-            feature,
-            description,
-            nbins=nbins,
-        )
+        if agg == "violin":
+            return get_feat_val_violin_plot(
+                X_test_global.copy(),
+                shap_logloss_df_global.copy(),
+                sg_feature,
+                feature,
+                description,
+                nbins=nbins,
+            )
+        elif agg == "box":
+            return get_feat_val_box(
+                X_test_global.copy(),
+                shap_logloss_df_global.copy(),
+                sg_feature=sg_feature,
+                feature=feature,
+                description=description,
+                nbins=nbins,
+            )
+        else:
+            return get_feat_val_bar(
+                X_test_global.copy(),
+                shap_logloss_df_global.copy(),
+                sg_feature=sg_feature,
+                feature=feature,
+                description=description,
+                nbins=nbins,
+                agg=agg,
+            )
 
     # Get calibration plot based on subgroup and slider selection
     @app.callback(
@@ -1008,7 +1066,7 @@ def run_app(
             feat_plot = get_feat_box(shap_values_df, sg_feature=sg_feature)
         elif agg == "violin":
             # Get a violin chart with the feature importances for sg and baseline
-            feat_plot = get_feat_shap_violin_plot(
+            feat_plot = get_feat_val_violin_plots(
                 shap_values_df, sg_feature=sg_feature
             )
         else:

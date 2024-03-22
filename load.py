@@ -215,14 +215,18 @@ def get_classifier(
         y_true_train: true labels for training
         onehot_X_test: one-hot encoded features dataframe used for testing
     """
-    # Training the classifier
     if model == "rf":
         classifier = RandomForestClassifier(
             n_estimators=20, max_depth=8, random_state=0
         )
-    # TODO: Add XGBoost
-    else:
+    elif model == "dt":
         classifier = DecisionTreeClassifier(min_samples_leaf=30, max_depth=8)
+    elif model == "xgb":
+        from xgboost import XGBClassifier
+        classifier = XGBClassifier()
+    else:
+        raise ValueError(f"Model {model} not supported. Supported models: rf, dt, xgb.")
+        
     if not with_names:
         onehot_X_train = onehot_X_train.values
         onehot_X_test = onehot_X_test.values
@@ -278,7 +282,11 @@ def get_shap_logloss(
         model_output="log_loss",
     )
     shap_values_logloss_all = explainer_bg_100.shap_values(d_train, y_true)
-    shap_logloss_df = pd.DataFrame(shap_values_logloss_all[1], columns=d_train.columns)
+    if len(shap_values_logloss_all) == 2:
+        shap_values_logloss_all = shap_values_logloss_all[1]
+    print("Shap values log loss shape: ", shap_values_logloss_all.shape)
+    print(len(d_train.columns))
+    shap_logloss_df = pd.DataFrame(shap_values_logloss_all, columns=d_train.columns)
     if combine_cat_features:
         shap_logloss_df = combine_all_one_hot_shap_logloss(
             shap_logloss_df, X.columns, cat_features
