@@ -24,7 +24,6 @@ def get_subgroup_dropdown_options(
             + str(result_set_df["size"][idx])
             # + f"; {quality_metric}: "
             # + str(result_set_df["quality"][idx].round(3))
-            # Add the metric value (e.g. Accuracy for acc_diff)
             + f"; {get_name_from_metric_str(quality_metric)}: "
             + str(result_set_df["metric_score"][idx]),
             "value": idx,

@@ -1,7 +1,7 @@
 # Subgroup Harm Assessor tool
 
 ## Description
-This project aims to assess the fairness of machine learning models in terms of subgroup predictive bias. It provides tools and metrics to evaluate the performance of models across different subgroups and identify potential biases based on model loss explanations.
+This project aims to assess the fairness of machine learning models in terms of subgroup harms and predictive bias. The developed tool provides guidance and metrics to evaluate the performance of models across different impacted subgroups and identify potential biases based on model loss explanations. Notably, due to SHAP limitations, we only support tree-based models (e.g. XGBoost, LightGBM, CatBoost, etc.). 
 
 ## Requirements
 To run the project, you need to have Python 3.7 or higher installed (3.8 recommended). You can install the required packages using the following command:

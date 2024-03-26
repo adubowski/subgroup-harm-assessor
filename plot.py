@@ -637,18 +637,18 @@ def get_feat_bar(shap_values_df, sg_feature, agg, error_bars=False) -> go.Figure
         sg_shap_values_agg = sg_shap_values_df.sum(numeric_only=True)
     elif agg == "mean_diff":
         # Get the difference in mean shap value for each feature
-        shap_values_df_agg = shap_values_df.mean(numeric_only=True) - sg_shap_values_df.mean(numeric_only=True)
+        shap_values_df_agg = sg_shap_values_df.mean(numeric_only=True) - shap_values_df.mean(numeric_only=True)
         # Then produce only a single bar plot with the difference
         fig = go.Figure()
         fig.add_trace(
             go.Bar(
                 x=shap_values_df_agg.index,
                 y=shap_values_df_agg,
-                name="Difference (Baseline - Subgroup)",
+                name="Difference (Subgroup - Baseline)",
             )
         )
         fig.update_layout(
-            title="Difference in mean of the SHAP feature contributions to model loss baseline and subgroup",
+            title="Difference in mean of the SHAP feature contributions to model loss (Subgroup - Baseline)",
             xaxis_title="Feature",
             yaxis_title="Difference in SHAP contributions to loss",
         )

@@ -464,6 +464,10 @@ def run_app(
                                                         id="feat-agg-dropdown",
                                                         options=[
                                                             {
+                                                                "label": "Statistical summary (box plot)",
+                                                                "value": "box",
+                                                            },
+                                                            {
                                                                 "label": "Mean",
                                                                 "value": "mean",
                                                             },
@@ -476,10 +480,6 @@ def run_app(
                                                                 "value": "sum",
                                                             },
                                                             {
-                                                                "label": "Statistical summary (box plot)",
-                                                                "value": "box",
-                                                            },
-                                                            {
                                                                 "label": "Distribution details (violin plot)",
                                                                 "value": "violin",
                                                             },
@@ -488,7 +488,7 @@ def run_app(
                                                                 "value": "mean_diff",
                                                             },
                                                         ],
-                                                        value="mean",
+                                                        value="box",
                                                         style={
                                                             "align-items": "center",
                                                             "text-align": "center",
