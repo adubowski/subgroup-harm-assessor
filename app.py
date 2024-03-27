@@ -464,7 +464,7 @@ def run_app(
                                                         id="feat-agg-dropdown",
                                                         options=[
                                                             {
-                                                                "label": "Statistical summary (box plot)",
+                                                                "label": "Statistical summary (box)",
                                                                 "value": "box",
                                                             },
                                                             {
@@ -480,7 +480,7 @@ def run_app(
                                                                 "value": "sum",
                                                             },
                                                             {
-                                                                "label": "Distribution details (violin plot)",
+                                                                "label": "Distribution details (violin)",
                                                                 "value": "violin",
                                                             },
                                                             {
@@ -563,16 +563,16 @@ def run_app(
                                                             "label": "Median",
                                                             "value": "median",
                                                         },
-                                                        {
-                                                            "label": "Sum",
-                                                            "value": "sum",
-                                                        },
+                                                        # {
+                                                        #     "label": "Sum",
+                                                        #     "value": "sum",
+                                                        # },
                                                         # {
                                                         #     "label": "Statistical summary (box plot)",
                                                         #     "value": "box",
                                                         # }, # FIXME: Box plots should be next to each other not on top
                                                         {
-                                                            "label": "Distribution details (violin plot)",
+                                                            "label": "Distribution details (violin)",
                                                             "value": "violin",
                                                         },
                                                     ],
