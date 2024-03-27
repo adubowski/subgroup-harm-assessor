@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import List, Tuple
 
 from sklearn.ensemble import RandomForestClassifier
 import shap
@@ -83,7 +83,7 @@ def load_data(
     n_samples=0,
     test_split=0.3,
     sensitive_features: List[str] = None,
-):
+) -> Tuple[pd.DataFrame, pd.Series, pd.Series, pd.DataFrame, pd.DataFrame, List[str]]:
     """Load data from UCI Adult dataset.
     Args:
         dataset (str): Dataset to be loaded, currently only Adult and German Credit datasets are supported
@@ -207,13 +207,16 @@ def get_classifier(
     onehot_X_test: pd.DataFrame,
     with_names=True,
     model="rf",
-):
+) -> Tuple[object, np.ndarray]:
     """Get a decision tree classifier for the given dataset.
 
     Args:
         onehot_X_train: one-hot encoded features dataframe used for training
         y_true_train: true labels for training
         onehot_X_test: one-hot encoded features dataframe used for testing
+    Returns:
+        classifier: trained classifier
+        y_pred_prob: predicted probabilities of the positive class
     """
     if model == "rf":
         classifier = RandomForestClassifier(

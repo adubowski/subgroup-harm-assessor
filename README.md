@@ -55,9 +55,17 @@ mean: Swap the continuous feature values of the subgroup with the mean of the to
 ```
 And others, which can be found in the `load.py` file.
 
-## Loading own dataset
-To load your own dataset, please edit the `import_dataset` function in load.py, retaining the same function signature (returning X and y_true).
+## Python modules
+
+### Loading dataset and model
+In the current version of the tool we load one of the selected datasets from openml and train a model on it.
+To load your own dataset, please edit the `import_dataset` or its parent `load_data` function in load.py, retaining the same method signatures.
+To load your own model, please edit the `get_classifier` function in load.py, retaining the same function signature (returning the trained model and predicted probabilities of the positive class).
+
+### Metrics
+We specify the metrics used in the thesis in the `metrics.py` file. In case further metrics are needed, they can be added to the methods in that file.
 
 ## Known issues:
 Currently, there are some non-critical issues with the project:
 - When switching tabs, the height of the plots can switch to the default 500px. It can be fixed by reselecting the subgroup (which regenerates the plots).
+- XGBoost seems to fail to train on the German Credit dataset, which is likely because the dataset has some specific characters in feature names
