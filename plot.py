@@ -885,6 +885,7 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
 
     # Generate a data table with the feature contributions to the model loss
     data_table = dash_table.DataTable(
+        sort_action="native",
         style_table={"overflowX": "auto"},
         style_data={"whiteSpace": "normal", "height": "auto"},
         data=df.to_dict("records"),
