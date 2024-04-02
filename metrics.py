@@ -30,7 +30,7 @@ Y_PRED_METRICS = (
 
 def average_log_loss_score(y_true, y_pred):
     """Average log loss function."""
-    return log_loss(y_true, y_pred)
+    return np.mean(log_loss(y_true, y_pred))
 
 
 def miscalibration_score(y_true, y_pred, n_bins=10):
