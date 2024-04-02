@@ -226,7 +226,7 @@ def get_classifier(
         classifier = DecisionTreeClassifier(min_samples_leaf=30, max_depth=8)
     elif model == "xgb":
         from xgboost import XGBClassifier
-        classifier = XGBClassifier() # FIXME: Issue with german credit dataset
+        classifier = XGBClassifier() # FIXME: Issue with feature names in german credit dataset
     else:
         raise ValueError(f"Model {model} not supported. Supported models: rf, dt, xgb.")
         

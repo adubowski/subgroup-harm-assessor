@@ -432,7 +432,7 @@ def run_app(
                                     dbc.Col(
                                         [
                                             html.H6(
-                                                "Select significance level for the Kolgomorov Smirnoff (KS) test - Data table rows in bold are significant at the selected level: "
+                                                "Select significance level alpha for the Kolgomorov Smirnoff (KS) test - Data table rows in bold are considered significant: "
                                             ),
                                             dcc.Slider(
                                                 0.01,
@@ -468,23 +468,22 @@ def run_app(
                                                                 "value": "box",
                                                             },
                                                             {
-                                                                "label": "Mean",
+                                                                "label": "Distribution details (violin)",
+                                                                "value": "violin",
+                                                            },                                                            # {
+                                                            #     "label": "Sum",
+                                                            #     "value": "sum",
+                                                            # },
+                                                            {
+                                                                "label": "Mean (bar)",
                                                                 "value": "mean",
                                                             },
                                                             {
-                                                                "label": "Median",
+                                                                "label": "Median (bar)",
                                                                 "value": "median",
                                                             },
                                                             {
-                                                                "label": "Sum",
-                                                                "value": "sum",
-                                                            },
-                                                            {
-                                                                "label": "Distribution details (violin)",
-                                                                "value": "violin",
-                                                            },
-                                                            {
-                                                                "label": "Mean difference",
+                                                                "label": "Mean difference (bar)",
                                                                 "value": "mean_diff",
                                                             },
                                                         ],
@@ -498,7 +497,7 @@ def run_app(
                                                     ),
                                                 ]),
                                             ])
-                                            
+
                                         ]
                                     ),
                                     html.Br(),
@@ -696,7 +695,7 @@ def run_app(
                                             ]),
                                         ]
                                     ),
-                                    
+
                                     html.H6(
                                         "Select (max) number of bins (numerical features only):"
                                     ),
@@ -964,7 +963,7 @@ def run_app(
             X_test, y_pred, sg_feature, feature, description, bins, agg
         )
         return class_plot, pred_plot
-            
+
 
     # Get feat-table-col
     @app.callback(
@@ -1140,7 +1139,7 @@ if __name__ == "__main__":
         help="Min support ratio for the subgroup discovery algorithm",
     )
     parser.add_argument(
-        "--min_quality",    
+        "--min_quality",
         type=float,
         default=0.01,
         help="Minimum quality for the subgroup discovery algorithm",
