@@ -263,9 +263,6 @@ def get_shap_values(classifier, d_train, X, cat_features, combine_cat_features=T
     Combines one-hot encoded categorical features into original features."""
     # Producing shap values
     explainer = shap.TreeExplainer(classifier)
-    # TODO: Add and evaluate interation values
-    # shap_interaction = explainer.shap_interaction_values(X)
-
     shap_values = explainer(d_train)
 
     if combine_cat_features:

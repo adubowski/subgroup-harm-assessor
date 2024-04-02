@@ -1009,7 +1009,6 @@ def run_app(
     def get_subgroup_stats(data, subgroup, nbins, agg, threshold=0.5):
         """Returns the group description and updates the charts of the selected subgroup"""
         if subgroup is None:
-            # TODO: Return baseline-only plots when no subgroup is selected
             raise PreventUpdate
         if len(data["descriptions"]) == 0:
             print("Error: No subgroups found. This should not happen.")
