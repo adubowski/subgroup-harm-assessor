@@ -579,7 +579,7 @@ def run_app(
                                                             "value": "violin",
                                                         },
                                                     ],
-                                                    value="mean",
+                                                    value="sum_weighted",
                                                     style={
                                                         "align-items": "center",
                                                         "text-align": "center",
