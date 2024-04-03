@@ -487,7 +487,7 @@ def run_app(
                                                                 "value": "mean_diff",
                                                             },
                                                         ],
-                                                        value="box",
+                                                        value="mean",
                                                         style={
                                                             "align-items": "center",
                                                             "text-align": "center",
@@ -562,10 +562,14 @@ def run_app(
                                                             "label": "Median",
                                                             "value": "median",
                                                         },
-                                                        # {
-                                                        #     "label": "Sum",
-                                                        #     "value": "sum",
-                                                        # },
+                                                        {
+                                                            "label": "Sum (Total)",
+                                                            "value": "sum",
+                                                        },
+                                                        {
+                                                            "label": "Sum (weighted)",
+                                                            "value": "sum_weighted",
+                                                        },
                                                         # {
                                                         #     "label": "Statistical summary (box plot)",
                                                         #     "value": "box",
@@ -575,7 +579,7 @@ def run_app(
                                                             "value": "violin",
                                                         },
                                                     ],
-                                                    value="violin",
+                                                    value="mean",
                                                     style={
                                                         "align-items": "center",
                                                         "text-align": "center",

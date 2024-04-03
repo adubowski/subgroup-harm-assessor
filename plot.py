@@ -562,8 +562,15 @@ def get_feat_val_bar(X, shap_df, sg_feature, feature, description, nbins=20, agg
     # Create a violin plot for the feature values
     fig = go.Figure()
 
-    baseline_df = concat_df.groupby(feature)["SHAP"].agg(agg)
-    sg_df = concat_df[sg_feature].groupby(feature)["SHAP"].agg(agg)
+    if agg == "sum_weighted":
+        # Calculate the weighted sum of the SHAP values by using a sum divided over the total group size
+        baseline_df = concat_df.groupby(feature)["SHAP"].agg("sum") / len(concat_df)
+        sg_df = concat_df[sg_feature].groupby(feature)["SHAP"].agg("sum") / len(concat_df[sg_feature])
+        title = "Weighted sum"
+    else:
+        baseline_df = concat_df.groupby(feature)["SHAP"].agg(agg)
+        sg_df = concat_df[sg_feature].groupby(feature)["SHAP"].agg(agg)
+        title = agg.capitalize()
     
     # Add trace for baseline
     fig.add_trace(
@@ -592,13 +599,13 @@ def get_feat_val_bar(X, shap_df, sg_feature, feature, description, nbins=20, agg
     )
     # Update layout
     fig.update_layout(
-        title="Feature distribution for "
+        title="SHAP feature value loss contributions for "
         + feature
         + f" in the subgroup ({description}) and the baseline <br>"
         + "The lower the feature's values, the higher its informativeness",
         xaxis_title=f"Feature"
         + f" values of {feature} <br> Feature type: {feature_type}; {slider_note}",
-        yaxis_title="Count",
+        yaxis_title=title + " of SHAP log loss values",
     )
     # If feature is continuous, we need to sort the bins
     if feature_type == "continuous":
@@ -860,10 +867,10 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
     df = df.sort_values(by=["KS statistic"], ascending=[False])
 
     # Merge avg and std columns
-    df["Baseline"] = (
+    df["Baseline (mean ± std)"] = (
         df["Baseline_avg"].astype(str) + " ± " + df["Baseline_std"].astype(str)
     )
-    df["Subgroup"] = (
+    df["Subgroup (mean ± std)"] = (
         df["Subgroup_avg"].astype(str) + " ± " + df["Subgroup_std"].astype(str)
     )
     df = df.drop(
@@ -874,8 +881,8 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
     df = df[
         [
             "Feature",
-            "Baseline",
-            "Subgroup",
+            "Baseline (mean ± std)",
+            "Subgroup (mean ± std)",
             "Cohen's d",
             "KS statistic",
             "KS p-value",
@@ -893,7 +900,12 @@ def get_feat_table(shap_values_df, sg_feature, sensitivity=4, alpha=0.05):
             {
                 "if": {"filter_query": "{KS p-value} < " + str(alpha)},
                 "fontWeight": "bold",
-            }
+            },
+            # Change background of cells to gray in the column "Cohen's d"
+            {
+                "if": {"column_id": "Cohen's d"},
+                "backgroundColor": "#f9f9f9",
+            },
         ],
     )
     return data_table
