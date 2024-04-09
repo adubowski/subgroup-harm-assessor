@@ -448,7 +448,7 @@ def run_app(
                                                 0,
                                                 7,
                                                 1,
-                                                value=1,
+                                                value=2,
                                                 id="feat-sensitivity-slider",
                                             ),
                                             html.H6(
@@ -470,10 +470,7 @@ def run_app(
                                                             {
                                                                 "label": "Distribution details (violin)",
                                                                 "value": "violin",
-                                                            },                                                            # {
-                                                            #     "label": "Sum",
-                                                            #     "value": "sum",
-                                                            # },
+                                                            },                                                      
                                                             {
                                                                 "label": "Mean (bar)",
                                                                 "value": "mean",
@@ -485,6 +482,10 @@ def run_app(
                                                             {
                                                                 "label": "Mean difference (bar)",
                                                                 "value": "mean_diff",
+                                                            },
+                                                            {
+                                                                "label": "Sum", # Weighted sum in this context is literally the mean
+                                                                "value": "sum",
                                                             },
                                                         ],
                                                         value="mean",
