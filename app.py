@@ -270,7 +270,8 @@ def run_app(
                                             html.H6(
                                                 "Full Dataset Baseline",
                                                 style={
-                                                    "border-bottom": "3px solid #d3d3d3"
+                                                    "border-bottom": "3px solid #d3d3d3",
+                                                    "font-weight": "normal",
                                                 },
                                             ),
                                             dbc.Row(
@@ -329,7 +330,8 @@ def run_app(
                                             html.H6(
                                                 "Selected Subgroup",
                                                 style={
-                                                    "border-bottom": "3px solid #d3d3d3"
+                                                    "border-bottom": "3px solid #d3d3d3",
+                                                    "font-weight": "normal",
                                                 },
                                             ),
                                             dbc.Row(
