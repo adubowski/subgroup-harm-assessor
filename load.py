@@ -315,9 +315,9 @@ def get_fairsd_result_set(
         y_true (pd.Series): True labels
         y_pred (pd.Series): Predicted labels
         qf (str, optional): Quality function. Defaults to "equalized_odds_difference".
-        depth (int, optional): Depth of subgroup discovery. Defaults to 2.
-        min_support (int, optional): Minimum support. Defaults to 30.
-        result_set_size (int, optional): Size of result set. Defaults to 10.
+        depth (int, optional): Depth of subgroup discovery. 
+        min_support (int, optional): Minimum support. 
+        result_set_size (int, optional): Size of result set. 
         kwargs: Additional arguments to pass to fairsd.SubgroupDiscoveryTask,
             including result_set_ratio and logging_level (as defined by logging module)
     """
