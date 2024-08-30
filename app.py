@@ -1082,7 +1082,7 @@ def run_app(
         return (sg_data_table, sg_conf_mat, sg_hist, roc_fig, feat_plot)
 
     print("App startup time (s): ", time.time() - start)
-    app.run_server(debug=False)
+    app.run(host='0.0.0.0', port=7860, debug=False)
 
 
 if __name__ == "__main__":

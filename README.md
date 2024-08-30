@@ -1,3 +1,13 @@
+---
+title: Subgroup Harm Assessor tool
+emoji: 🐢
+colorFrom: blue
+colorTo: yellow
+sdk: docker
+pinned: false
+license: mit
+---
+
 # Subgroup Harm Assessor tool
 
 ## Description
